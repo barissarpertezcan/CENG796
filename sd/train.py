@@ -1,42 +1,24 @@
 import torch
 import torch.nn.functional as F
 import os
-import shutil
 from tqdm import tqdm
-
-from encoder import VAE_Encoder
 from ddpm import DDPMSampler
-from clip import CLIP
-from diffusion import Diffusion
 from pipeline import get_time_embedding
 from dataloader import train_dataloader
+import model_loader
+import time
+from config import *
 
-# TODO: move these to a config file
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# define the constants 
-WIDTH = 512
-HEIGHT = 512
-LATENTS_WIDTH = WIDTH // 8
-LATENTS_HEIGHT = HEIGHT // 8
+model_file = "./data/v1-5-pruned.ckpt"
+models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 
-first_epoch = 0
-num_train_epochs = 10
-latents_shape = (1, 4, LATENTS_HEIGHT, LATENTS_WIDTH)
-
-# optimizer constants
-learning_rate = 1e-4
-adam_beta1 = 0.9
-adam_beta2 = 0.999
-adam_weight_decay = 0.0
-adam_epsilon = 1e-8
-
-checkpoints_total_limit = None
-output_dir = "output"
-
-vae = VAE_Encoder()
+vae = models['encoder']
+text_encoder = models['clip']
+decoder = models['decoder']
+unet = models['diffusion']
 ddpm = DDPMSampler(generator=None)
-text_encoder = CLIP()
-unet = Diffusion()
 
 # Disable gradient computations for the VAE, DDPM, and text_encoder models
 for param in vae.parameters():
@@ -51,9 +33,13 @@ text_encoder.eval()
 
 optimizer = torch.optim.Adam(unet.parameters(), lr=learning_rate, betas=(adam_beta1, adam_beta2), weight_decay=adam_weight_decay, eps=adam_epsilon)
 
-global_step = 0
 
-def train(num_train_epochs, device="cuda"):
+def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=10000):
+    global_step = 0
+
+    # create the output directory
+    os.makedirs(output_dir, exist_ok=True)
+
     # move models to the device
     vae.to(device)
     text_encoder.to(device)
@@ -61,54 +47,70 @@ def train(num_train_epochs, device="cuda"):
 
     num_train_epochs = tqdm(range(first_epoch, num_train_epochs), desc="Epoch")
     for epoch in num_train_epochs:
-            train_loss = 0.0
-            for step, batch in enumerate(train_dataloader):
-                # batch consists of images and texts, we need to extract the images and texts
+        train_loss = 0.0
+        for step, batch in enumerate(train_dataloader):
+            start_time = time.time()
 
-                # move batch to the device
-                batch["pixel_values"] = batch["pixel_values"].to(device)
-                batch["input_ids"] = batch["input_ids"].to(device)
+            # batch consists of images and texts, we need to extract the images and texts
 
-                # (Batch_Size, 4, Latents_Height, Latents_Width)
-                encoder_noise = torch.randn(latents_shape, device=device)
-                encoder_noise = encoder_noise.to(device)
-                # (Batch_Size, 4, Latents_Height, Latents_Width)
-                latents = vae(batch["pixel_values"], encoder_noise)
+            # move batch to the device
+            batch["pixel_values"] = batch["pixel_values"].to(device)
+            batch["input_ids"] = batch["input_ids"].to(device)
 
-                # Sample noise that we'll add to the latents -> it is done inside the add noise method
-                # noise = torch.randn_like(latents)
-                
-                bsz = latents.shape[0]
+            # (Batch_Size, 4, Latents_Height, Latents_Width)
+            encoder_noise = torch.randn(latents_shape, device=device)
+            encoder_noise = encoder_noise.to(device)
+            # (Batch_Size, 4, Latents_Height, Latents_Width)
+            latents = vae(batch["pixel_values"], encoder_noise)
 
-                # Sample a random timestep for each image
-                timesteps = torch.randint(0, ddpm.num_train_timesteps, (bsz,), device=latents.device)
-                timesteps = timesteps.long()
+            # Sample noise that we'll add to the latents -> it is done inside the add noise method
+            # noise = torch.randn_like(latents)
+            
+            bsz = latents.shape[0]
 
-                # Add noise to the latents according to the noise magnitude at each timestep
-                # (this is the forward diffusion process)
-                noisy_latents, noise = ddpm.add_noise(latents, timesteps)
+            # Sample a random timestep for each image and text
+            timesteps = torch.randint(0, ddpm.num_train_timesteps, (bsz,), device=latents.device)
+            timesteps = timesteps.long()
+            text_timesteps = torch.randint(0, ddpm.num_train_timesteps, (bsz,), device=latents.device)
+            text_timesteps = text_timesteps.long()
 
-                # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(batch["input_ids"])
+            # Add noise to the latents according to the noise magnitude at each timestep (this is the forward diffusion process)
+            noisy_latents, image_noise = ddpm.add_noise(latents, timesteps)
 
-                target = noise
+            # Get the text embedding for conditioning
+            encoder_hidden_states = text_encoder(batch["input_ids"])
 
-                time_embeddings = get_time_embedding(timesteps).to(device)
+            # Add noise to the text query according to the noise magnitude at each timestep
+            noisy_text_query, text_noise = ddpm.add_noise(encoder_hidden_states, text_timesteps)
 
-                # Predict the noise residual and compute loss
-                model_pred = unet(noisy_latents, encoder_hidden_states, time_embeddings)
+            image_time_embeddings = get_time_embedding(timesteps, is_image=True).to(device)
+            text_time_embeddings = get_time_embedding(timesteps, is_image=False).to(device)
+            
+            # take average and normalize the text time embeddings
+            average_noisy_text_query = noisy_text_query.mean(dim=1)
+            text_query = F.normalize(average_noisy_text_query, p=2, dim=-1)
 
-                loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
-                
-                train_loss += loss.item()
+            # Target for the model is the noise that was added to the latents and the text query
+            image_target = image_noise
+            text_target = text_query
 
-                # Backpropagate
-                loss.backward()
+            # Predict the noise residual and compute loss
+            image_pred, text_pred = unet(noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
 
-                optimizer.zero_grad()
-                optimizer.step()
-                # lr_scheduler.step() # maybe linear scheduler can be added
+            image_loss = F.mse_loss(image_pred.float(), image_target.float(), reduction="mean")
+            text_loss = F.mse_loss(text_pred.float(), text_target.float(), reduction="mean")
+            
+            train_loss += image_loss + Lambda * text_loss
 
+            # Backpropagate
+            loss = image_loss + Lambda * text_loss
+            loss.backward()
+
+            optimizer.zero_grad()
+            optimizer.step()
+            # lr_scheduler.step() # maybe linear scheduler can be added
+
+            if global_step % save_steps == 0:
                 # _before_ saving state, check if this save would set us over the `checkpoints_total_limit`
                 if checkpoints_total_limit is not None:
                     checkpoints = os.listdir(output_dir)
@@ -127,7 +129,7 @@ def train(num_train_epochs, device="cuda"):
 
                         for removing_checkpoint in removing_checkpoints:
                             removing_checkpoint = os.path.join(output_dir, removing_checkpoint)
-                            shutil.rmtree(removing_checkpoint)
+                            os.remove(removing_checkpoint)
 
                 save_path = os.path.join(output_dir, f"checkpoint-{global_step}")
 
@@ -139,16 +141,16 @@ def train(num_train_epochs, device="cuda"):
 
                 print(f"Saved state to {save_path}")
 
-                print("step_loss:", loss.detach().item())
-                
-                # if global_step >= max_train_steps:
-                #     break
+            end_time = time.time()
+            print("step_loss:", loss.detach().item(), "time per step:", (end_time - start_time) / bsz, "step per second:", bsz / (end_time - start_time))
+            
+            if global_step >= max_train_steps:
+                break
 
-                global_step += 1
+            global_step += 1
 
-            print("Average loss over epoch:", train_loss / (step + 1))
+        print("Average loss over epoch:", train_loss / (step + 1))
 
 
-    
 if __name__ == "__main__":
     train(num_train_epochs)

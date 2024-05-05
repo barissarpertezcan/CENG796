@@ -1,3 +1,5 @@
+from config import *
+
 train_dataloader = None # TODO: define the train dataloader
 # apply the following transformations to the images
 # Preprocessing the datasets.
@@ -40,9 +42,9 @@ class DummyDataset(Dataset):
 
 
 # Parameters for the dummy dataset
-num_samples = 10
-batch_size = 1
-image_dim = (512, 512)
+num_samples = 100
+batch_size = BATCH_SIZE
+image_dim = (WIDTH, HEIGHT)
 num_tokens = 77
 
 # Create a dummy dataset and dataloader

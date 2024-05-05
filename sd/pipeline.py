@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from ddpm import DDPMSampler
+import torch.nn.functional as F
 
 WIDTH = 512
 HEIGHT = 512
@@ -118,6 +119,7 @@ def generate(
         for i, timestep in enumerate(timesteps):
             # (1, 320)
             time_embedding = get_time_embedding(timestep).to(device)
+            text_time_embeddings = torch.zeros((1, 192), device=device)
 
             # (Batch_Size, 4, Latents_Height, Latents_Width)
             model_input = latents
@@ -126,9 +128,13 @@ def generate(
                 # (Batch_Size, 4, Latents_Height, Latents_Width) -> (2 * Batch_Size, 4, Latents_Height, Latents_Width)
                 model_input = model_input.repeat(2, 1, 1, 1)
 
+            # take average and normalize the text time embeddings
+            average_noisy_text_query = context.mean(dim=1)
+            text_query = F.normalize(average_noisy_text_query, p=2, dim=-1)
+
             # model_output is the predicted noise
             # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
-            model_output = diffusion(model_input, context, time_embedding)
+            model_output, text_output = diffusion(model_input, context, time_embedding, text_time_embeddings, text_query)
 
             if do_cfg:
                 output_cond, output_uncond = model_output.chunk(2)
@@ -161,15 +167,26 @@ def rescale(x, old_range, new_range, clamp=False):
         x = x.clamp(new_min, new_max)
     return x
 
-def get_time_embedding(timestep):
-    # Shape: (160,)
-    freqs = torch.pow(10000, -torch.arange(start=0, end=160, dtype=torch.float32) / 160) 
+def get_time_embedding(timesteps, is_image=True):
+    if is_image:
+        # Shape: (160,)
+        freqs = torch.pow(10000, -torch.arange(start=0, end=160, dtype=torch.float32) / 160)
+    else:
+        # Shape: (96,)
+        freqs = torch.pow(10000, -torch.arange(start=0, end=96, dtype=torch.float32) / 96)
+
+    freqs = freqs.to(timesteps.device)
     
-    # Shape: (1, 160)
+    # Shape: (1, 160) or (1, 96)
     # x = torch.tensor([timestep], dtype=torch.float32)[:, None] * freqs[None]
     # not very sure, need to be checked
-    x = x.type(torch.float32)[:, None] * freqs[None]
+    # Ensure timesteps is a 1-D tensor
+    
+    if timesteps.dim() == 0:
+        timesteps = timesteps.unsqueeze(0)
 
+    timesteps = torch.tensor(timesteps, dtype=torch.float32)[:, None] # convert the batch of timesteps to a 2-D tensor
+    x = timesteps * freqs[None] # perform the multiplication
 
-    # Shape: (1, 160 * 2)
+    # Shape: (1, 160 * 2) or (1, 96 * 2)
     return torch.cat([torch.cos(x), torch.sin(x)], dim=-1)
