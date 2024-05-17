@@ -3,8 +3,6 @@ Barış Sarper Tezcan, Furkan Genç
 CENG796 Deep Generative Models
 
 Autoregressive Models, Maximum Likelihood Estimation Topic Summary Outline
-1.	Introduction to Autoregressive Models
-•	What are autoregressive models?
 
 ## Introduction to Autoregressive Models
 
@@ -27,7 +25,7 @@ This process is done in two steps:
 
 2. **Search for model parameters $\theta$ based on training data `D`:** This involves optimizing the parameters to best fit the observed data, typically using methods like maximum likelihood estimation. This step is about training the model on the dataset to find the best parameters that make the model generate images as close as possible to the original ones.
 
-
+## Structure of Autoregressive Models
 ### Chain Rule Factorization
 In autoregressive models, the joint probability distribution of a sequence of variables is factorized into a product of conditional probabilities using the chain rule of probability. This factorization allows us to model the complex dependencies between variables in a sequential manner.
 
@@ -39,9 +37,17 @@ $$p(x) = p(x_1) * p(x_2 | x_1) * p(x_3 | x_1, x_2) * ... * p(x_n | x_1, x_2, ...
 
 This factorization makes it feasible to model and generate sequences by sequentially sampling each variable conditioned on the previously generated variables.
 
+We can also consider different orderings of the variables in the chain rule factorization. For instance, `p(x)` can also be factorized as:
+$$p(x) = p(x_n) * p(x_{n-1} | x_n) * p(x_{n-2} | x_{n-1}, x_n) * ... * p(x_1 | x_2, x_3, ..., x_n) $$
+
+These are two examples of chain rule factorization. While in theory, all factorizations are equivalent in terms of representing the joint distribution, it is more logical to choose the first one when modeling MNIST images. This is because the first example follows a natural and sequential dependency where each pixel depends on the previous ones in a raster scan order. This logical ordering simplifies the modeling process and aligns better with the structure of image data. Choosing this ordering is a modeling assumption that can make the model more interpretable and efficient.
+
 ### Number of Parameters
 
-The number of parameters required to model the joint distribution depends on the number of conditional distributions we need to learn. For each variable $x_i$, we need to estimate the conditional probability $p(x_i \mid x_1, x_2, \ldots, x_{i-1})$.
+The number of parameters required to model the joint distribution depends on the number of conditional distributions we need to learn. Let's consider a binary sequence of length $n$ as an example. In this case, each variable $x_i$ can take two values (0 or 1). For each variable $x_i$, we need to estimate the conditional probability $p(x_i \mid x_1, x_2, \ldots, x_{i-1})$.
+
+![Number of Parameters to Learn](topic_summary_images/number_of_parameter.png)
+*Figure: Number of Parameters to Learn*
 
 1. **For $x_1$:**
    - $p(x_1)$ requires 1 parameter (since it is unconditional).
@@ -67,43 +73,360 @@ This is a geometric series with the first term $a = 1$ and the common ratio $r =
 
 $$ S_n = a \frac{r^n - 1}{r - 1} $$
 
-For $n = 784$ (since we have 784 pixels):
+For a binary sequence of length $n$, the total number of parameters is given by:
 
-$$ \text{Total Parameters} = \frac{2^{784} - 1}{2 - 1} = 2^{n} - 1 $$
+$$ \text{Total Parameters} = \frac{2^{n} - 1}{2 - 1} = 2^{n} - 1 $$
 
 ### Implications
 
 - **Exponential Growth**: The number of parameters grows exponentially with the number of variables. This can make the model very complex and computationally expensive.
-- **Scalability**: For large sequences, such as images with many pixels, this exponential growth can become impractical. For instance, for a 28x28 image, the number of parameters would be $2^{784} - 1$, which is practically impossible to learn.
+- **Scalability**: For large sequences, such as images with many pixels, this exponential growth can become impractical. For instance, for a 28x28 image, the number of parameters would be $2^{784} - 1$, which is practically impossible to learn even for such low resolution images.
+
+### Bayesian Networks vs. Neural Models Comparison
+
+To model the conditional distributions in chain rule factorization, Bayesian networks and neural models are commonly used. Let's compare these two approaches in the context of autoregressive models.
+
+#### Bayesian Networks
+
+![Number of Parameters to Learn](topic_summary_images/bayes_net.png)
+*Figure: Bayesian Network*
+
+- **Conditional Independence Assumptions**: Bayesian Networks rely on conditional independence assumptions, which simplify the model by assuming that certain variables are independent of others given their parents.
+- **Graphical Structure**: They use a directed acyclic graph (DAG) to represent the dependencies between variables.
+- **Inference**: The inference process can be computationally intensive due to the need to marginalize over multiple variables.
+
+#### Neural Models
+
+![Number of Parameters to Learn](topic_summary_images/neural_models.png)
+*Figure: Neural Models*
+
+- **No Conditional Independence Assumptions**: Neural autoregressive models do not assume conditional independence. Instead, they use neural networks to directly model the conditional distributions.
+- **Flexibility**: Neural models can capture complex dependencies and interactions between variables without predefined independence assumptions.
+- **Scalability**: Neural networks can efficiently handle large and high-dimensional datasets, making them suitable for modern generative modeling tasks.
+
+### Advantages of Neural Autoregressive Models
+- **Expressiveness**: Neural networks can model complex, high-dimensional data distributions.
+- **Learning Efficiency**: Neural networks can leverage large amounts of data to learn accurate models.
+- **Generative Power**: They can generate highly realistic sequences by capturing intricate dependencies in the data.
+
+## How to Model Autoregressive Models?
+To model autoregressive models, we start by using the chain rule of probability to factorize the joint probability distribution of a sequence of variables into a product of conditional probabilities. For a sequence of variables $x = (x_1, x_2, \dots, x_{n})$, without loss of generality, we can write the joint probability as:
+
+$$
+p(x_1, \ldots, x_{n}) = p(x_1) \cdot p(x_2 \mid x_1) \cdot p(x_3 \mid x_1, x_2) \cdot \ldots \cdot p(x_{n} \mid x_1, \ldots, x_{n-1})
+$$
+
+Some conditional distributions can be too complex to be stored in tabular form. Instead, we assume parameterized forms for these conditionals. This approach allows us to model the complex dependencies between variables more efficiently. For instance, we can use logistic regression or neural networks to parameterize the conditional distributions. Let's look at some models used for autoregressive density estimation. 
+
+### Logistic Regression
+For instance, we can use a logistic regression model to parameterize the conditionals as follows:
+
+$$
+p(x_1, \ldots, x_{n}) = p_{\text{CPT}}(x_1; \alpha^1) p_{\text{logit}}(x_2 \mid x_1; \alpha^2) p_{\text{logit}}(x_3 \mid x_1, x_2; \alpha^3) \cdots p_{\text{logit}}(x_n \mid x_1, \ldots, x_{n-1}; \alpha^n)
+$$
+
+#### More Explicitly
+- For the first pixel:
+  $$ p_{\text{CPT}}(X_1 = 1; \alpha^1) = \alpha^1, \quad p(X_1 = 0) = 1 - \alpha^1 $$
+
+- For the second pixel:
+  $$ p_{\text{logit}}(X_2 = 1 \mid x_1; \alpha^2) = \sigma(\alpha_0^2 + \alpha_1^2 x_1) $$
+
+- For the third pixel:
+  $$ p_{\text{logit}}(X_3 = 1 \mid x_1, x_2; \alpha^3) = \sigma(\alpha_0^3 + \alpha_1^3 x_1 + \alpha_2^3 x_2) $$
+
+where $\sigma$ is the logistic sigmoid function:
+
+$$ \sigma(z) = \frac{1}{1 + e^{-z}} $$
+
+- **$\alpha_0^i$**: The bias term, representing the inherent probability of a pixel being 1 without considering the influence of other pixels.
+- **$\alpha_1^i, \alpha_2^i, \ldots$**: These are weights representing the influence of the corresponding previous pixels on the current pixel's value. Each $\alpha$ parameter is associated with a specific previous pixel, indicating how strongly that pixel affects the probability of the current pixel being 1. Note that the superscript $i$ denotes the modeling of the $i$-th pixel, as indicated by the superscript. For example, $\alpha_0^2$ and $\alpha_1^2$ are used for modeling $X_2$, while $\alpha_0^3$, $\alpha_1^3$, and $\alpha_2^3$ are used for modeling $X_3$.
+
+### Fully Visible Sigmoid Belief Networks (FVSBN)
+
+In FVSBN's the conditional variables $X_i \mid X_1, \ldots, X_{i-1}$ are Bernoulli random variables with parameters:
+
+$$ \hat{x}_i = p(X_i = 1 \mid x_1, \ldots, x_{i-1}; \alpha^i) = p(X_i = 1 \mid x_{<i}; \alpha^i) = \sigma\left(\alpha_0^i + \sum_{j=1}^{i-1} \alpha_j^i x_j\right) $$
+
+$\hat{x}_i$ represents the probability of the $i$-th pixel being 1 given the previous pixels. The parameters $\alpha^i = (\alpha_0^i, \alpha_1^i, \ldots, \alpha_{i-1}^i)$ are learned during training.
+
+#### Evaluating the Joint Probability
+To evaluate the joint probability $p(x_1, \ldots, x_{n})$, multiply all the conditionals (factors). For example:
+
+$$
+p(X_1 = 0, X_2 = 1, X_3 = 1, X_4 = 0) = (1 - \hat{x}_1) \times \hat{x}_2 \times \hat{x}_3 \times (1 - \hat{x}_4)
+$$
+
+$$
+= (1 - \hat{x}_1) \times \hat{x}_2 (X_1 = 0) \times \hat{x}_3 (X_1 = 0, X_2 = 1) \times (1 - \hat{x}_4 (X_1 = 0, X_2 = 1, X_3 = 1))
+$$
+
+Observe that the probability of each pixel being 1 is conditioned on the previous pixels. This sequential dependency is a key characteristic of autoregressive models.
+
+#### Sampling from the Joint Distribution
+To sample from $p(x_1, \ldots, x_{n})$:
+1. Sample $x_1 \sim p(x_1)$ (e.g., np.random.choice([1,0], p=$[\hat{x}_1, 1-\hat{x}_1]$))
+2. Sample $x_2 \sim p(x_2 \mid x_1 = x_1)$
+3. Sample $x_3 \sim p(x_3 \mid x_1 = x_1, x_2 = x_2)$
+4. Continue this process for all subsequent pixels.
+
+#### Number of Parameters
+The total number of parameters in the network is given by the sum of the series:
+
+$$ 1 + 2 + 3 + \ldots + n \approx \frac{n^2}{2} $$
+
+#### Likelihood Evaluation and Generation
+- **Likelihood evaluation**: The likelihood of the entire sequence can be evaluated in parallel because the conditionals are independent given the previous values. So, in training, we can evaluate the likelihood of the entire sequence in parallel since we know the previous values, i.e., the entire sequence/image.
+- **Generation**: The generation process is sequential because each value is generated based on the previous values.
+
+![Number of Parameters to Learn](topic_summary_images/fvsbn_results.png)
+*Figure: FVSBN Results from Learning Deep Sigmoid Belief Networks with Data Augmentation. Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model* 
+
+### Neural Autoregressive Density Estimation (NADE)
+NADE, or Neural Autoregressive Density Estimation, is a model introduced by Hugo Larochelle and Iain Murray in their paper "The Neural Autoregressive Distribution Estimator" at AISTATS 2011. NADE is an autoregressive model that uses neural networks to model the probability distribution of high-dimensional data.
+
+To improve the FVSBN, NADE uses a two-layer neural network instead of logistic regression. The conditional distribution for each variable $X_i$ is modeled using the following equations.
+
+#### Hidden Layer Calculation
+The hidden layer activations $h_i$ are computed as:
+
+$$ h_i = \sigma(A_i x_{<i} + c_i) $$
+
+where:
+- $A_i$ is a matrix of weights.
+- $x_{<i}$ denotes all variables preceding $X_i$.
+- $c_i$ is a bias term.
+- $\sigma$ is the sigmoid activation function.
+
+![NADE Hidden Layer Calculation](topic_summary_images/nade_hidden_layer_calculation.png)
+*Figure: NADE Hidden Layer Calculation* 
+
+#### Output Layer Calculation
+The conditional probability $\hat{x}_i$ is then computed as:
+
+$$ \hat{x}_i = p(x_i \mid x_1, \ldots, x_{i-1}; A_i, c_i, \alpha_i, b_i) = \sigma(\alpha_i \cdot h_i + b_i) $$
+
+where:
+- $\alpha_i$ and $b_i$ are parameters for the output layer and $h_i$ is a d-dimensional hidden layer vector which is used to compute $p(x_i \mid x_1, \ldots, x_{i-1})$.
+
+For example:
+- For $h_2$:
+  $$ h_2 = \sigma(A_2 x_1 + c_2) $$
+
+- For $h_3$:
+  $$ h_3 = \sigma(A_3 (x_1, x_2)^T + c_3) $$
+
+![NADE](topic_summary_images/nade_parameter_sharing.png)
+*Figure: NADE Parameter Sharing* 
+
+#### Parameter Tying
+To reduce the number of parameters, NADE ties the weights across different conditionals. This means that the same weights are used for different conditional distributions. For example, the weights multiplied with $x_1$ in the hidden layer are shared across all conditionals that depend on $x_1$. So, the weights $A_2$ and $A_3$ share the same weights for $x_1$ and the weights $A_3$ and $A_4$ share the same weights for $x_2$. This parameter sharing reduces the number of parameters and helps in learning more efficiently.
+
+#### Computational Efficiency
+- Each $h_j$ calculation has an additional cost of $O(d)$. So the cost to compute $h_1, \ldots, h_n$ is $O(nd)$.
+- Given all needed $h$ values, the cost to compute $p(x_i \mid \ldots)$ is $O(d)$. The total cost to compute all conditional probabilities given precomputed $h$ vectors is $O(nd)$.
+- Therefore, the total cost for $p(x)$ is $O(nd)$.
+
+### Total Number of Parameters
+If $h_i \in \mathbb{R}^d$, the total number of parameters is linear in $n$:
+- Weights $W \in \mathbb{R}^{d \times n}$
+- Biases $c \in \mathbb{R}^d$
+- $n$ logistic regression coefficient vectors $\alpha_i, b_i \in \mathbb{R}^{d+1}$
 
 
+![NADE Results](topic_summary_images/nade_results.png)
+*Figure: NADE Results. Left: Samples, Right: Conditional Probabilities $\hat{x}_i$* 
+
+
+![FVSBN vs NADE](topic_summary_images/fvsbn_vs_nade.png)
+*Figure: FVSBN vs NADE* 
+
+## General Discrete Distributions
+
+To model non-binary discrete random variables $X_i \in \{1, \ldots, K\}$ such as pixel intensities varying from 0 to 255, we can use a categorical distribution for $\hat{x}_i$.
+
+To model the conditional distribution of $X_i$, we can use a neural network to parameterize a categorical distribution as follows:
+
+#### Hidden Layer Calculation
+The hidden layer activations $h_i$ are computed as:
+
+$$ h_i = \sigma(W_{.,<i} x_{<i} + c) $$
+
+where:
+- $W_{.,<i}$ is a weight matrix used to compute the hidden layer activations.
+- $x_{<i}$ denotes all variables preceding $X_i$.
+- $c$ is a bias term.
+- $\sigma$ is the sigmoid activation function.
+
+#### Output Layer Calculation
+The conditional probability $\hat{x}_i$ is computed as a categorical distribution:
+
+$$ p(x_i \mid x_1, \ldots, x_{i-1}) = \text{Cat}(p_i^1, \ldots, p_i^K) $$
+
+where:
+- $\hat{x}_i = (p_i^1, \ldots, p_i^K) = \text{softmax}(X_i h_i + b_i)$
+
+#### Softmax Function
+The softmax function generalizes the sigmoid/logistic function $\sigma(\cdot)$ and transforms a vector of $K$ numbers into a vector of $K$ probabilities (non-negative, summing to 1):
+
+$$ \text{softmax}(a) = \text{softmax}(a^1, \ldots, a^K) = \left( \frac{\exp(a^1)}{\sum_i \exp(a^i)}, \ldots, \frac{\exp(a^K)}{\sum_i \exp(a^i)} \right) $$
+
+In NumPy, this can be implemented as:
+
+```python
+np.exp(a) / np.sum(np.exp(a))
+```
+
+### Modeling RGB Images
+When dealing with RGB images, where each pixel consists of three color channels (red, green, and blue), we need to extend our modeling approach. Here are some example options for modeling RGB:
+
+#### Option 1: Single Random Variable
+Treat the RGB triplet $(r_i, g_i, b_i)$ as a single random variable:
+
+$$ p(\text{rgb}_i \mid x_{<i}) = \text{Softmax}([1, 256^3]) $$
+
+In this approach, the RGB value is seen as a single random variable with $256^3$ different discrete variations.
+
+#### Option 2: Conditional Independence
+Assume conditional independence between the channels:
+
+$$ p(x_i \mid x_{<i}) = p(r_i \mid x_{<i}) \cdot p(g_i \mid x_{<i}) \cdot p(b_i \mid x_{<i}) $$
+
+In this approach, each color channel is modeled independently, given the previous pixels. Note that with this approach green channel will not know about the red channel, and blue channel will not know about the red and green channels during generation. This can lead to less coherent results but we can sample r, g and b channels in parallel.
+
+#### Option 3: Autoregressive Modeling
+Model the RGB channels sequentially in an autoregressive manner:
+
+$$ p(r_i, g_i, b_i \mid x_{<i}) = p(r_i \mid x_{<i}) \cdot p(g_i \mid x_{<i}, r_i) \cdot p(b_i \mid x_{<i}, r_i, g_i) $$
+
+This approach models the red channel first, then the green channel conditioned on the red channel, and finally the blue channel conditioned on both the red and green channels. In this option, the generation process is also sequential for channels, i.e., we first generate the red channel, then the green channel, and finally the blue channel.
+
+## Autoregressive Models vs. Autoencoders
+
+### Similarities on the Surface
+On the surface, FVSBN and NADE look similar to an autoencoder:
+- **Encoder $e(\cdot)$**: Transforms the input $x$ into a latent representation $h$.
+  $$ e(x) = \sigma(W^2 (W^1 x + b^1) + b^2) $$
+- **Decoder $d(\cdot)$**: Reconstructs the input from the latent representation.
+  $$ d(h) \approx x \quad \text{e.g.,} \quad d(h) = \sigma(Vh + c) $$
+
+### Loss Function
+The loss function ensures that the reconstruction is close to the original input. For binary random variables:
+$$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i - x_i \log \hat{x}_i - (1 - x_i) \log (1 - \hat{x}_i) $$
+
+For continuous random variables:
+$$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i (x_i - \hat{x}_i)^2 $$
+
+### Ensuring Meaningful Representations
+The encoder $e$ and decoder $d$ are constrained so that we don't learn identity mappings. The goal is to ensure that $e(x)$ is a meaningful, compressed representation of $x$, useful for feature learning.
+
+### Vanilla Autoencoder vs. Generative Model
+A vanilla autoencoder is not a generative model. It does not define a distribution over $x$ that we can sample from to generate new data points.
+
+### Autoregressive Autoencoders
+To turn an autoencoder into a generative model, we need to make sure it corresponds to a valid Bayesian Network (DAG structure). This requires an ordering:
+
+1. **Ordering**: If the ordering is 1, 2, 3, then:
+   - $\hat{x}_1$ cannot depend on any input $x$. At generation time, we don't need any input to get started.
+   - $\hat{x}_2$ can only depend on $x_1$.
+   - $\hat{x}_3$ can only depend on $x_1$ and $x_2$.
+   - And so on.
+
+2. **Single Neural Network**: We can use a single neural network (with $n$ outputs) to produce all the parameters. In contrast, NADE requires $n$ passes. This is much more efficient on modern hardware.
+
+### MADE: Masked Autoencoder for Distribution Estimation
+1. **Challenge**: An autoencoder that is autoregressive (DAG structure).
+2. **Solution**: Use masks to disallow certain paths (Germain et al., 2015). Suppose ordering is $x_2, x_3, x_1$:
+   - The unit producing the parameters for $p(x_2)$ is not allowed to depend on any input.
+   - The unit for $p(x_3 | x_2)$ only depends on $x_2$.
+   - The unit for $p(x_1 | x_2, x_3)$ depends on $x_2$ and $x_3$.
+
+   Steps to achieve this:
+   1. For each unit in a hidden layer, pick a random integer $i$ in $[1, n-1]$. The unit is allowed to depend only on the first $i$ inputs.
+   2. Add a mask to preserve this invariant: Connect to all units in the previous layer with smaller or equal assigned numbers (strictly less in the final layer).
+
+## Case Study: PixelCNN
+PixelCNN is an autoregressive generative model for images introduced by van den Oord et al. in their paper "Pixel Recurrent Neural Networks" at ICML 2016. PixelCNN models the joint distribution of pixel values in an image using a deep convolutional neural network. The model generates images pixel by pixel, conditioning each pixel on the previously generated pixels.
+
+PixelCNN is a deep learning model designed for image generation. It is an autoregressive model, meaning it generates images pixel-by-pixel, conditioning each pixel on the previously generated pixels. The model was introduced by van den Oord et al. in their paper "Pixel Recurrent Neural Networks."
+
+### Autoregressive Architecture
+In Pixel CNN, RGB images are modeled such that each color channel is conditioned on the previous channels as well as all the previously generated pixels. The authors rewrite the distribution $p(x_i \mid x_{<i})$ as the following product:
+
+$$
+p(x_{i,R} \mid x_{<i}) \cdot p(x_{i,G} \mid x_{<i}, x_{i,R}) \cdot p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G})
+$$
+
+Each of the colors is thus conditioned on the other channels as well as on all the previously generated pixels.
+
+### Model Structure
+PixelCNN uses a convolutional neural network (CNN) with masked convolutions to ensure the autoregressive property is maintained. The key components are:
+
+1. **Masked Convolutions**: These are used to prevent the model from looking at future pixels during training. There are two types of masks:
+   - **Mask A**: Used in the first layer to ensure the current pixel does not depend on itself.
+   - **Mask B**: Used in subsequent layers to ensure the current pixel depends only on the previous pixels in the raster-scan order.
+
+2. **Residual Blocks**: PixelCNN employs residual blocks to allow for deeper architectures and better gradient flow. Each residual block consists of two masked convolutional layers followed by a skip connection.
+
+3. **Gated Activation Units**: Gated activation units are used to improve the model's ability to capture complex dependencies. The activation function is a combination of tanh and sigmoid functions, which control the flow of information through the network.
+
+### Training
+During training, the model learns to predict the intensity of each pixel given the previous pixels. The loss function used is the negative log-likelihood of the observed pixels:
+
+$$
+\mathcal{L} = -\sum_{i=1}^{n} \log p(x_i \mid x_1, x_2, \ldots, x_{i-1})
+$$
+
+For RGB images, the model learns to predict the red channel first, followed by the green channel conditioned on the red, and finally the blue channel conditioned on both the red and green channels:
+
+$$
+\mathcal{L} = -\sum_{i=1}^{n} \left[ \log p(x_{i,R} \mid x_{<i}) + \log p(x_{i,G} \mid x_{<i}, x_{i,R}) + \log p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G}) \right]
+$$
+
+This ensures that the model captures the dependencies between the color channels and all previously generated pixels during training.
+
+
+### Sampling
+To generate an image, Pixel CNN samples pixel values sequentially from the learned conditional distributions. Starting from the top-left corner, each pixel is sampled based on the previously generated pixels, until the entire image is generated. For RGB images, this process involves sampling the red channel first, then the green channel conditioned on the red, and finally the blue channel conditioned on both the red and green channels:
+
+1. Sample $x_{i,R}$ based on $x_{<i}$.
+2. Sample $x_{i,G}$ based on $x_{<i}$ and $x_{i,R}$.
+3. Sample $x_{i,B}$ based on $x_{<i}$, $x_{i,R}$, and $x_{i,G}$.
+
+This ensures that each pixel's color channels are generated in a manner that captures the dependencies between them and all previously generated pixels.
+
+
+
+## Summary of Autoregressive Models
+### Advantages of Autoregressive Models
+- **Flexibility**: Can model complex dependencies in sequential data.
+- **High-Quality Outputs**: Often produce high-quality and coherent sequences.
+- **Interpretability**: The coefficients $( \phi_i )$ provide insight into the influence of past values.
+
+### Challenges
+- **Computationally Intensive**: Sequential prediction can be slow and computationally expensive.
+- **Dependency on Previous Values**: Errors can propagate through the sequence, affecting later predictions.
+
+
+# the following can be put in the conclusion section at the end of the document
 
 #### Applications in Generative AI
 - **Text Generation**: Autoregressive models like GPT (Generative Pre-trained Transformer) predict the next word in a sequence, conditioned on the previous words.
 - **Image Generation**: PixelRNN and PixelCNN are autoregressive models that generate images pixel by pixel.
 - **Music Generation**: Models like WaveNet generate audio samples in an autoregressive manner.
 
-### Advantages of Autoregressive Models
-- **Flexibility**: Can model complex dependencies in sequential data.
-- **High-Quality Outputs**: Often produce high-quality and coherent sequences.
-- **Interpretability**: The coefficients \( \phi_i \) provide insight into the influence of past values.
 
-### Challenges
-- **Computationally Intensive**: Sequential prediction can be slow and computationally expensive.
-- **Dependency on Previous Values**: Errors can propagate through the sequence, affecting later predictions.
 
 ### Conclusion
 Autoregressive models play a crucial role in generative modeling by leveraging past data points to generate realistic and coherent sequences. Understanding their principles and applications is essential for advancing generative AI techniques.
 
 
----
 
-### References
-- [Wikipedia: Autoregressive model](https://en.wikipedia.org/wiki/Autoregressive_model)
-- [Introduction to Time Series Analysis](https://example.com/introduction-to-time-series-analysis)
+## outline
 
-
-
+1. Introduction to Autoregressive Models
+• What are autoregressive models?
+• Motivating Example MNIST: Two-step process of Autoregressive Models (How to model and how to learn?)
 2.	Structure of Autoregressive Models
 •	Chain Rule Factorization
 •	Bayesian Networks vs Neural Models Comparison (emphasizing the lack of conditional independence assumptions in neural models)
@@ -114,7 +437,6 @@ Autoregressive models play a crucial role in generative modeling by leveraging p
 •	Autoregressive models vs. Autoencoders (How to model an autoregressive model as an autoencoder?)
 4.	Case Study: Pixel CNN (Usage of CNN’s (masked convolution) in autoregressive models)
 5.	Summary of Autoregressive Models (Pros and Cons)
-
 
 6.	Learning a Generative Model
 •	Goal of Learning 
