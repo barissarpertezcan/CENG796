@@ -1,6 +1,7 @@
 # Autoregressive Models, Maximum Likelihood Estimation Topic Summary 
-Barış Sarper Tezcan, Furkan Genç
 CENG796 Deep Generative Models
+
+Barış Sarper Tezcan, Furkan Genç
 
 ## Introduction to Autoregressive Models
 
@@ -490,7 +491,7 @@ $$
 For continuous distributions, it is defined as:
 
 $$
-D_{\text{KL}}(p \| q) = \int p(x) \log \frac{p(x)}{q(x)} \, dx
+D_{\text{KL}}(p \| q) = \int p(x) \log \frac{p(x)}{q(x)} \ dx
 $$
 
 KL divergence is always non-negative and is zero if and only if $p = q$ almost everywhere.
@@ -552,7 +553,7 @@ where $x_{i}$ are samples from the data distribution.
 ## Finding Optimal Parameters with MLE
 
 ### Analytical Derivation (Coin Example)
-Consider a coin with probability $\theta$ of landing heads. Given a set of observations $D = \{x_1, x_2, \ldots, x_n\}$, where $x_i \in \{0, 1\}$ (0 for tails, 1 for heads), the likelihood of the data is:
+Consider a coin with probability $\theta$ of landing heads. Given a set of observations $D = \\{x_1, x_2, \ldots, x_n\\}$, where $x_i \in \\{0, 1\\}$ (0 for tails, 1 for heads), the likelihood of the data is:
 
 $$
 p(D|\theta) = \prod_{i=1}^{n} \theta^{x_i} (1 - \theta)^{1 - x_i}
@@ -579,7 +580,7 @@ $$
 This is the sample mean of the observed data, which makes intuitive sense as the best estimate for the probability of heads.
 
 ### MLE Learning with Gradient Descent in Neural Models
-For more complex models, especially those involving neural networks, we often use gradient descent to maximize the log-likelihood. The gradient of the log-likelihood with respect to the parameters $\theta$ is computed, and the parameters are updated iteratively:
+For more complex models, especially those involving neural networks, we often use gradient ascent to maximize the log-likelihood since there is usually no closed-form solution. The gradient of the log-likelihood with respect to the parameters $\theta$ is computed, and the parameters are updated iteratively:
 
 $$
 \theta \leftarrow \theta + \eta \nabla_{\theta} \log p(D|\theta)
@@ -617,32 +618,9 @@ In this topic summary, we have explored:
 
 By understanding and applying these concepts, we can build robust generative models capable of creating high-quality and realistic data, pushing the boundaries of generative AI.
 
+## References
+1. [PixelCNN Explained](https://sergeiturukin.com/2017/02/22/pixelcnn.html)
+2. Slide by Stefano Ermon, Aditya Grover. *Autoregressive Models, Maximum Likelihood Estimation*
+3. Gan, Zhe, et al. "Learning deep sigmoid belief networks with data augmentation." *Artificial Intelligence and Statistics.* PMLR, 2015.
+4. Hugo Larochelle, Iain Murray. *The Neural Autoregressive Distribution Estimator.* AISTATS 2011.
 
-
-## Autoregressive Models, Maximum Likelihood Estimation Topic Summary Outline
-
-1. Introduction to Autoregressive Models
-• What are autoregressive models?
-• Motivating Example MNIST: Two-step process of Autoregressive Models (How to model and how to learn?)
-2.	Structure of Autoregressive Models
-•	Chain Rule Factorization
-•	Bayesian Networks vs Neural Models Comparison (emphasizing the lack of conditional independence assumptions in neural models)
-3.	How to model Autoregressive Models?
-•	Fully Visible Sigmoid Belief Networks (FVSBN) (Contrast between parallelizable likelihood evaluation and sequential data generation)
-•	NADE (Neural Autoregressive Density Estimation)
-•	General discrete distributions (How to model the density of an RGB image as an autoregressive model?)
-•	Autoregressive models vs. Autoencoders (How to model an autoregressive model as an autoencoder?)
-4.	Case Study: Pixel CNN (Usage of CNN’s (masked convolution) in autoregressive models)
-5.	Summary of Autoregressive Models (Pros and Cons)
-
-6.	Learning a Generative Model
-•	Goal of Learning 
-•	Learning as Density Estimation
-7.	Maximum Likelihood Estimation (MLE)
-•	KL Divergence (Formulation, Jensen's inequality, briefly mention some of the interpretations of KL divergence)
-•	Relation of KL divergence and expected log-likelihood (minimizing KL divergence is equivalent to maximizing the expected log-likelihood, Monte Carlo estimation)
-7.1  Finding optimal parameters with MLE
-•	Analytical Derivation (Coin Example)
-•	MLE Learning with Gradient Descent in Neural Models
-7.2 Empirical Risk and Overfitting (optional)
-8. Conclusion (recap of the key points of the concepts being covered)
