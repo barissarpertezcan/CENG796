@@ -127,13 +127,16 @@ $$
 
 #### More Explicitly
 - For the first pixel:
-  $$ p_{\text{CPT}}(X_1 = 1; \alpha^1) = \alpha^1, \quad p(X_1 = 0) = 1 - \alpha^1 $$
+
+$$ p_{\text{CPT}}(X_1 = 1; \alpha^1) = \alpha^1, \quad p(X_1 = 0) = 1 - \alpha^1 $$
 
 - For the second pixel:
-  $$ p_{\text{logit}}(X_2 = 1 \mid x_1; \alpha^2) = \sigma(\alpha_0^2 + \alpha_1^2 x_1) $$
+
+$$ p_{\text{logit}}(X_2 = 1 \mid x_1; \alpha^2) = \sigma(\alpha_0^2 + \alpha_1^2 x_1) $$
 
 - For the third pixel:
-  $$ p_{\text{logit}}(X_3 = 1 \mid x_1, x_2; \alpha^3) = \sigma(\alpha_0^3 + \alpha_1^3 x_1 + \alpha_2^3 x_2) $$
+ 
+$$ p_{\text{logit}}(X_3 = 1 \mid x_1, x_2; \alpha^3) = \sigma(\alpha_0^3 + \alpha_1^3 x_1 + \alpha_2^3 x_2) $$
 
 where $\sigma$ is the logistic sigmoid function:
 
@@ -146,9 +149,11 @@ $$ \sigma(z) = \frac{1}{1 + e^{-z}} $$
 
 In FVSBN's the conditional variables $X_i \mid X_1, \ldots, X_{i-1}$ are Bernoulli random variables with parameters:
 
-$$ \hat{x}_i = p(X_i = 1 \mid x_1, \ldots, x_{i-1}; \alpha^i) = p(X_i = 1 \mid x_{<i}; \alpha^i) = \sigma\left(\alpha_0^i + \sum_{j=1}^{i-1} \alpha_j^i x_j\right) $$
+<div align="center">
+<img src="https://latex.codecogs.com/svg.image?\hat{x}_i=p(X_i=1\mid&space;x_1,\ldots,x_{i-1};\alpha^i)=p(X_i=1\mid&space;x_{<i};\alpha^i)=\sigma\left(\alpha_0^i&plus;\sum_{j=1}^{i-1}\alpha_j^i&space;x_j\right)" />
+</div>
 
-$\hat{x}_i$ represents the probability of the $i$-th pixel being 1 given the previous pixels. The parameters $\alpha^i = (\alpha_0^i, \alpha_1^i, \ldots, \alpha_{i-1}^i)$ are learned during training.
+$\hat{x}_ {i}$ represents the probability of the $i$-th pixel being 1 given the previous pixels. The parameters $α^i = (α_0^ {i}, α_1^ i, \ldots, α_{i-1}^i)$ are learned during training.
 
 #### Evaluating the Joint Probability
 To evaluate the joint probability $p(x_1, \ldots, x_{n})$, multiply all the conditionals (factors). For example:
@@ -165,7 +170,7 @@ Observe that the probability of each pixel being 1 is conditioned on the previou
 
 #### Sampling from the Joint Distribution
 To sample from $p(x_1, \ldots, x_{n})$:
-1. Sample $x_1 \sim p(x_1)$ (e.g., np.random.choice([1,0], p=$[\hat{x}_1, 1-\hat{x}_1]$))
+1. Sample $x_1 \sim p(x_1)$ (e.g., np.random.choice([1,0], p = [x̂₁, 1 - x̂₁]))
 2. Sample $x_2 \sim p(x_2 \mid x_1 = x_1)$
 3. Sample $x_3 \sim p(x_3 \mid x_1 = x_1, x_2 = x_2)$
 4. Continue this process for all subsequent pixels.
@@ -190,11 +195,13 @@ To improve the FVSBN, NADE uses a two-layer neural network instead of logistic r
 #### Hidden Layer Calculation
 The hidden layer activations $h_i$ are computed as:
 
-$$ h_i = \sigma(A_i x_{<i} + c_i) $$
+<!-- $$ h_i = \sigma(A_{i} x_ {<i} + c_{i}) $$ -->
+
+$$ h_i = σ(A_{i}  x_ {< i} + c_{i}) $$
 
 where:
 - $A_i$ is a matrix of weights.
-- $x_{<i}$ denotes all variables preceding $X_i$.
+- $x_{< i}$ denotes all variables preceding $X_i$.
 - $c_i$ is a bias term.
 - $\sigma$ is the sigmoid activation function.
 
@@ -204,17 +211,21 @@ where:
 #### Output Layer Calculation
 The conditional probability $\hat{x}_i$ is then computed as:
 
-$$ \hat{x}_i = p(x_i \mid x_1, \ldots, x_{i-1}; A_i, c_i, \alpha_i, b_i) = \sigma(\alpha_i \cdot h_i + b_i) $$
+<!-- $$ \hat{x}_i = p(x_i \mid x_1, \ldots, x_{i-1}; A_i, c_i, \alpha_i, b_i) = \sigma(\alpha_i \cdot h_i + b_i) $$ -->
+
+$$ \hat{x}_ i = p(x_i \mid x_1, \ldots, x_{i - 1}; A_i, c_i, \alpha_i, b_i) = \sigma(\alpha_i \cdot h_i + b_i) $$
 
 where:
 - $\alpha_i$ and $b_i$ are parameters for the output layer and $h_i$ is a d-dimensional hidden layer vector which is used to compute $p(x_i \mid x_1, \ldots, x_{i-1})$.
 
 For example:
 - For $h_2$:
-  $$ h_2 = \sigma(A_2 x_1 + c_2) $$
+
+$$ h_2 = σ(A_2 x_1 + c_2) $$
 
 - For $h_3$:
-  $$ h_3 = \sigma(A_3 (x_1, x_2)^T + c_3) $$
+
+$$ h_3 = σ(A_3 (x_1, x_2)^T + c_3) $$
 
 ![NADE](topic_summary_images/nade_parameter_sharing.png)
 *Figure: NADE Parameter Sharing* 
@@ -235,7 +246,7 @@ If $h_i \in \mathbb{R}^d$, the total number of parameters is linear in $n$:
 
 
 ![NADE Results](topic_summary_images/nade_results.png)
-*Figure: NADE Results. Left: Samples, Right: Conditional Probabilities $\hat{x}_i$* 
+*Figure: NADE Results. Left: Samples, Right: Conditional Probabilities x̂ᵢ* 
 
 
 ![FVSBN vs NADE](topic_summary_images/fvsbn_vs_nade.png)
@@ -250,13 +261,13 @@ To model the conditional distribution of $X_i$, we can use a neural network to p
 #### Hidden Layer Calculation
 The hidden layer activations $h_i$ are computed as:
 
-$$ h_i = \sigma(W_{.,<i} x_{<i} + c) $$
+$$ h_i = \sigma(W_{. , < i} x_{< i} + c) $$
 
 where:
-- $W_{.,<i}$ is a weight matrix used to compute the hidden layer activations.
-- $x_{<i}$ denotes all variables preceding $X_i$.
+- $W_{. , < i}$ is a weight matrix used to compute the hidden layer activations.
+- $x_{< i}$ denotes all variables preceding $X_i$.
 - $c$ is a bias term.
-- $\sigma$ is the sigmoid activation function.
+- σ is the sigmoid activation function.
 
 #### Output Layer Calculation
 The conditional probability $\hat{x}_i$ is computed as a categorical distribution:
@@ -290,14 +301,14 @@ In this approach, the RGB value is seen as a single random variable with $256^3$
 #### Option 2: Conditional Independence
 Assume conditional independence between the channels:
 
-$$ p(x_i \mid x_{<i}) = p(r_i \mid x_{<i}) \cdot p(g_i \mid x_{<i}) \cdot p(b_i \mid x_{<i}) $$
+$$ p(x_i \mid x_{< i}) = p(r_i \mid x_{< i}) \cdot p(g_i \mid x_{< i}) \cdot p(b_i \mid x_{< i}) $$
 
 In this approach, each color channel is modeled independently, given the previous pixels. Note that with this approach green channel will not know about the red channel, and blue channel will not know about the red and green channels during generation. This can lead to less coherent results but we can sample r, g and b channels in parallel.
 
 #### Option 3: Autoregressive Modeling
 Model the RGB channels sequentially in an autoregressive manner:
 
-$$ p(r_i, g_i, b_i \mid x_{<i}) = p(r_i \mid x_{<i}) \cdot p(g_i \mid x_{<i}, r_i) \cdot p(b_i \mid x_{<i}, r_i, g_i) $$
+$$ p(r_i, g_i, b_i \mid x_{< i}) = p(r_i \mid x_{< i}) \cdot p(g_i \mid x_{< i}, r_i) \cdot p(b_i \mid x_{< i}, r_i, g_i) $$
 
 This approach models the red channel first, then the green channel conditioned on the red channel, and finally the blue channel conditioned on both the red and green channels. In this option, the generation process is also sequential for channels, i.e., we first generate the red channel, then the green channel, and finally the blue channel.
 
@@ -306,16 +317,27 @@ This approach models the red channel first, then the green channel conditioned o
 ### Similarities on the Surface
 On the surface, FVSBN and NADE look similar to an autoencoder:
 - **Encoder $e(\cdot)$**: Transforms the input $x$ into a latent representation $h$.
-  $$ e(x) = \sigma(W^2 (W^1 x + b^1) + b^2) $$
+  
+$$ e(x) = σ(W^2 (W^1 x + b^1) + b^2) $$
+  
 - **Decoder $d(\cdot)$**: Reconstructs the input from the latent representation.
-  $$ d(h) \approx x \quad \text{e.g.,} \quad d(h) = \sigma(Vh + c) $$
+  
+$$ d(h) \approx x \quad \text{e.g.,} \quad d(h) = σ(Vh + c) $$
 
 ### Loss Function
 The loss function ensures that the reconstruction is close to the original input. For binary random variables:
-$$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i - x_i \log \hat{x}_i - (1 - x_i) \log (1 - \hat{x}_i) $$
+
+<!-- $$ \text{min}_{W ^ 1 , W ^ 2 , b ^ 1 , b ^ 2 , V , c} \sum_{x \in D} \sum_i - x_i \log \hat{x}_ i - (1 - x_i) \log (1 - \hat{x}_ i) $$ -->
+
+<div align="center">
+<img src="https://latex.codecogs.com/svg.image?\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in&space;D}\sum_i-x_i\log\hat{x}_&space;i-(1-x_i)\log(1-\hat{x}_&space;i)" title="\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in D}\sum_i-x_i\log\hat{x}_ i-(1-x_i)\log(1-\hat{x}_ i)" />
+</div>
 
 For continuous random variables:
-$$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i (x_i - \hat{x}_i)^2 $$
+<!-- $$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i (x_i - \hat{x}_i)^2 $$ -->
+<div align="center">
+<img src="https://latex.codecogs.com/svg.image?\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in&space;D}\sum_i(x_i-\hat{x}_i)^2" title="\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in D}\sum_i(x_i-\hat{x}_i)^2" />
+</div>
 
 ### Ensuring Meaningful Representations
 The encoder $e$ and decoder $d$ are constrained so that we don't learn identity mappings. The goal is to ensure that $e(x)$ is a meaningful, compressed representation of $x$, useful for feature learning.
@@ -351,10 +373,10 @@ PixelCNN is an autoregressive generative model for images introduced by van den 
 PixelCNN is a deep learning model designed for image generation. It is an autoregressive model, meaning it generates images pixel-by-pixel, conditioning each pixel on the previously generated pixels. The model was introduced by van den Oord et al. in their paper "Pixel Recurrent Neural Networks."
 
 ### Autoregressive Architecture
-In Pixel CNN, RGB images are modeled such that each color channel is conditioned on the previous channels as well as all the previously generated pixels. The authors rewrite the distribution $p(x_i \mid x_{<i})$ as the following product:
+In Pixel CNN, RGB images are modeled such that each color channel is conditioned on the previous channels as well as all the previously generated pixels. The authors rewrite the distribution $p(x_i \mid x_{< i})$ as the following product:
 
 $$
-p(x_{i,R} \mid x_{<i}) \cdot p(x_{i,G} \mid x_{<i}, x_{i,R}) \cdot p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G})
+p(x_{i , R} \mid x_{< i}) \cdot p(x_{i , G} \mid x_{< i}, x_{i , R}) \cdot p(x_{i , B} \mid x_{< i}, x_{i , R}, x_{i , G})
 $$
 
 Each of the colors is thus conditioned on the other channels as well as on all the previously generated pixels.
@@ -379,9 +401,15 @@ $$
 
 For RGB images, the model learns to predict the red channel first, followed by the green channel conditioned on the red, and finally the blue channel conditioned on both the red and green channels:
 
+<!-- 
 $$
 \mathcal{L} = -\sum_{i=1}^{n} \left[ \log p(x_{i,R} \mid x_{<i}) + \log p(x_{i,G} \mid x_{<i}, x_{i,R}) + \log p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G}) \right]
-$$
+$$ 
+-->
+
+<div align="center">
+<img src="https://latex.codecogs.com/svg.image?\mathcal{L}=-\sum_{i=1}^{n}\left[\log&space;p(x_{i,R}\mid&space;x_{<i})&plus;\log&space;p(x_{i,G}\mid&space;x_{<i},x_{i,R})&plus;\log&space;p(x_{i,B}\mid&space;x_{<i},x_{i,R},x_{i,G})\right]" title="\mathcal{L}=-\sum_{i=1}^{n}\left[\log p(x_{i,R}\mid x_{<i})+\log p(x_{i,G}\mid x_{<i},x_{i,R})+\log p(x_{i,B}\mid x_{<i},x_{i,R},x_{i,G})\right]" />
+</div>
 
 This ensures that the model captures the dependencies between the color channels and all previously generated pixels during training.
 
@@ -389,9 +417,9 @@ This ensures that the model captures the dependencies between the color channels
 ### Sampling
 To generate an image, Pixel CNN samples pixel values sequentially from the learned conditional distributions. Starting from the top-left corner, each pixel is sampled based on the previously generated pixels, until the entire image is generated. For RGB images, this process involves sampling the red channel first, then the green channel conditioned on the red, and finally the blue channel conditioned on both the red and green channels:
 
-1. Sample $x_{i,R}$ based on $x_{<i}$.
-2. Sample $x_{i,G}$ based on $x_{<i}$ and $x_{i,R}$.
-3. Sample $x_{i,B}$ based on $x_{<i}$, $x_{i,R}$, and $x_{i,G}$.
+1. Sample $x_{i , R}$ based on $x_{< i}$.
+2. Sample $x_{i , G}$ based on $x_{< i}$ and $x_{i , R}$.
+3. Sample $x_{i , B}$ based on $x_{< i}$, $x_{i , R}$, and $x_{i , G}$.
 
 This ensures that each pixel's color channels are generated in a manner that captures the dependencies between them and all previously generated pixels.
 
