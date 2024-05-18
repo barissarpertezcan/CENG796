@@ -502,7 +502,7 @@ $$
 f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
 $$
 
-Since the negative logarithm function \(-\log(x)\) is convex, applying Jensen's Inequality to the expectation of \(\log\) functions gives us:
+Since the negative logarithm function $-\log(x)$ is convex, applying Jensen's Inequality to the expectation of $\log$ functions gives us:
 
 $$
 -\log \mathbb{E}[X] \leq \mathbb{E}[-\log X]
