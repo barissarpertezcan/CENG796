@@ -541,10 +541,6 @@ Since the second term \( \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)] \
 
 In practice, the expected log-likelihood can be estimated using Monte Carlo methods by averaging the log-likelihood over a finite set of samples from the data distribution:
 
-$$
-\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] \approx \frac{1}{N} \sum_{i=1}^{N} \log p_{\theta}(x_i)
-$$
-
 <div align="center">
 
 <img src="https://latex.codecogs.com/svg.image?\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\theta}(x)]\approx\frac{1}{N}\sum_{i=1}^{N}\log&space;p_{\theta}(x_i)" title="\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]\approx\frac{1}{N}\sum_{i=1}^{N}\log p_{\theta}(x_i)" />
