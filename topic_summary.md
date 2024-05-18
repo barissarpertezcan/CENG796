@@ -522,22 +522,16 @@ $$
 ### Relation of KL Divergence and Expected Log-Likelihood
 Minimizing the KL divergence \( D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) \) is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
-$$
-D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) = - \mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] + \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)]
-$$
+$$ D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) = - \mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] + \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)] $$
 
 Since the second term \( \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)] \) is constant with respect to \( \theta \), minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
 
-$$
-\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]
-$$
+$$ \mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] $$
 
 #### Monte Carlo Estimation
 In practice, the expected log-likelihood can be estimated using Monte Carlo methods by averaging the log-likelihood over a finite set of samples from the data distribution:
 
-$$
-\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] \approx \frac{1}{N} \sum_{i=1}^{N} \log p_{\theta}(x_i)
-$$
+$$ \mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] \approx \frac{1}{N} \sum_{i=1}^{N} \log p_{\theta}(x_i) $$
 
 where \( x_i \) are samples from the data distribution.
 
