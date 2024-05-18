@@ -521,7 +521,7 @@ $$
 
 ### Relation of KL Divergence and Expected Log-Likelihood
 
-Minimizing the KL divergence <div> <img src="https://latex.codecogs.com/svg.image?D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" title="D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" /> </div> is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
+Minimizing the KL divergence <img src="https://latex.codecogs.com/svg.image?D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" title="D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" /> is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
 <div align="center">
 
@@ -529,7 +529,7 @@ Minimizing the KL divergence <div> <img src="https://latex.codecogs.com/svg.imag
 
 </div>
 
-Since the second term \( \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)] \) is constant with respect to \( \theta \), minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
+Since the second term <img src="https://latex.codecogs.com/svg.image?\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\text{data}}(x)]" title="\mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)]" /> is constant with respect to <img src="https://latex.codecogs.com/svg.image?\theta&space;" title="\theta " />, minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
 
 <div align="center">
 
@@ -547,7 +547,7 @@ In practice, the expected log-likelihood can be estimated using Monte Carlo meth
 
 </div>
 
-where \( x_i \) are samples from the data distribution.
+where $ x_i $ are samples from the data distribution.
 
 ## Finding Optimal Parameters with MLE
 
