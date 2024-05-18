@@ -2,8 +2,6 @@
 Barış Sarper Tezcan, Furkan Genç
 CENG796 Deep Generative Models
 
-Autoregressive Models, Maximum Likelihood Estimation Topic Summary Outline
-
 ## Introduction to Autoregressive Models
 
 ### What are autoregressive models?
@@ -15,15 +13,15 @@ In the context of generative models, autoregressive models can be extended to ge
 
 The MNIST dataset, which consists of handwritten digits, can be used as a motivating example to explain the concept of autoregressive generative models.
 
-Given the dataset `D` of binarized MNIST images, each image has `n = 28 x 28 = 784` pixels. Each pixel can either be black (`0`) or white (`1`).
+Given the dataset D of binarized MNIST images, each image has n = 28 x 28 = 784 pixels. Each pixel can either be black (0) or white (1).
 
-The goal is to learn a probability distribution $p(x) = p(x_1, x_2, ..., x_{784})$ over `x` in $\{0, 1\}^{784}$ such that when `x` is drawn from `p(x)`, it looks like a digit. In other words, we want to generate new images that resemble the original handwritten digits.
+The goal is to learn a probability distribution $p(x) = p(x_1, x_2, ..., x_{784})$ over x in $\{0, 1\}^{784}$ such that when x is drawn from p(x), it looks like a digit. In other words, we want to generate new images that resemble the original handwritten digits.
 
 This process is done in two steps:
 
 1. **Parameterize a model family $\{ p_θ(x), \theta \in \Theta\}$:** This involves defining a model where the probability of each pixel is conditioned on the previous pixels. This means that the value of each pixel is dependent on the values of the pixels that came before it. This is the essence of an autoregressive model, where the output is a function of its own previous values.
 
-2. **Search for model parameters $\theta$ based on training data `D`:** This involves optimizing the parameters to best fit the observed data, typically using methods like maximum likelihood estimation. This step is about training the model on the dataset to find the best parameters that make the model generate images as close as possible to the original ones.
+2. **Search for model parameters $\theta$ based on training data D:** This involves optimizing the parameters to best fit the observed data, typically using methods like maximum likelihood estimation. This step is about training the model on the dataset to find the best parameters that make the model generate images as close as possible to the original ones.
 
 ## Structure of Autoregressive Models
 ### Chain Rule Factorization
@@ -32,12 +30,12 @@ In autoregressive models, the joint probability distribution of a sequence of va
 #### Why Use Chain Rule Factorization?
 The chain rule factorization is used in autoregressive models because it provides a systematic way to decompose the joint distribution of a sequence into simpler, conditional distributions. This decomposition allows us to generate each value in the sequence one at a time, conditioned on the previous values.
 
-Given a sequence of variables $x = (x_1, x_2, ..., x_n)$, the joint probability `p(x)` can be factorized as:
+Given a sequence of variables $x = (x_1, x_2, ..., x_n)$, the joint probability p(x) can be factorized as:
 $$p(x) = p(x_1) * p(x_2 | x_1) * p(x_3 | x_1, x_2) * ... * p(x_n | x_1, x_2, ..., x_{n-1}) $$
 
 This factorization makes it feasible to model and generate sequences by sequentially sampling each variable conditioned on the previously generated variables.
 
-We can also consider different orderings of the variables in the chain rule factorization. For instance, `p(x)` can also be factorized as:
+We can also consider different orderings of the variables in the chain rule factorization. For instance, p(x) can also be factorized as:
 $$p(x) = p(x_n) * p(x_{n-1} | x_n) * p(x_{n-2} | x_{n-1}, x_n) * ... * p(x_1 | x_2, x_3, ..., x_n) $$
 
 These are two examples of chain rule factorization. While in theory, all factorizations are equivalent in terms of representing the joint distribution, it is more logical to choose the first one when modeling MNIST images. This is because the first example follows a natural and sequential dependency where each pixel depends on the previous ones in a raster scan order. This logical ordering simplifies the modeling process and aligns better with the structure of image data. Choosing this ordering is a modeling assumption that can make the model more interpretable and efficient.
@@ -190,7 +188,7 @@ $$ 1 + 2 + 3 + \ldots + n \approx \frac{n^2}{2} $$
 ### Neural Autoregressive Density Estimation (NADE)
 NADE, or Neural Autoregressive Density Estimation, is a model introduced by Hugo Larochelle and Iain Murray in their paper "The Neural Autoregressive Distribution Estimator" at AISTATS 2011. NADE is an autoregressive model that uses neural networks to model the probability distribution of high-dimensional data.
 
-To improve the FVSBN, NADE uses a two-layer neural network instead of logistic regression. The conditional distribution for each variable $X_i$ is modeled using the following equations.
+To improve the modeling accuracy, NADE uses a two-layer neural network instead of logistic regression. The conditional distribution for each variable $X_i$ is modeled using the following equations.
 
 #### Hidden Layer Calculation
 The hidden layer activations $h_i$ are computed as:
@@ -388,9 +386,40 @@ PixelCNN uses a convolutional neural network (CNN) with masked convolutions to e
    - **Mask A**: Used in the first layer to ensure the current pixel does not depend on itself.
    - **Mask B**: Used in subsequent layers to ensure the current pixel depends only on the previous pixels in the raster-scan order.
 
+
+![5x5 Masked Convolution](topic_summary_images/masked_convolution.png)
+
+*Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image*
+
+![Mask A and B](topic_summary_images/mask_a_b.png)
+
+*Figure: Mask A and B used in PixelCNN*
+
 2. **Residual Blocks**: PixelCNN employs residual blocks to allow for deeper architectures and better gradient flow. Each residual block consists of two masked convolutional layers followed by a skip connection.
 
 3. **Gated Activation Units**: Gated activation units are used to improve the model's ability to capture complex dependencies. The activation function is a combination of tanh and sigmoid functions, which control the flow of information through the network.
+
+### Splitting Convolution Filters for RGB Channels
+
+In Pixel CNN, convolution filters (hidden dimensions) are split into three groups to handle RGB images. Each group corresponds to one color channel: red (R), green (G), and blue (B). There are two main ways to achieve this:
+
+1. **Reserving Filters**: Reserve the first $N/3$ filters for the red channel, the next $N/3$ filters for the green channel, and the rest for the blue channel.
+2. **Virtual Splitting**: Virtually split the filters into groups of three, with each group corresponding to a different color channel.
+
+![Reserving Filters](topic_summary_images/reserving_filters.png)
+
+*Figure: Reserving Filters for RGB Channels*
+
+![Virtual Splitting](topic_summary_images/virtual_splitting.png)
+
+*Figure: Virtual Splitting of Filters for RGB Channels*
+
+Either method can be used, but the second method (virtual splitting) is often preferred. This approach groups the filters in a way that corresponds to each color channel.
+
+Once the filters are split, they are connected appropriately to enforce the desired computational paths. Masks are applied to ensure that each pixel is conditioned only on the relevant preceding pixels and color channels.
+
+Masks help enforce proper computational paths between the underlying image colors and filters, ensuring that each pixel's prediction is based on the correct dependencies.
+
 
 ### Training
 During training, the model learns to predict the intensity of each pixel given the previous pixels. The loss function used is the negative log-likelihood of the observed pixels:
@@ -450,7 +479,7 @@ Autoregressive models play a crucial role in generative modeling by leveraging p
 
 
 
-## outline
+## Autoregressive Models, Maximum Likelihood Estimation Topic Summary Outline
 
 1. Introduction to Autoregressive Models
 • What are autoregressive models?
