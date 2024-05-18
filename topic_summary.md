@@ -520,6 +520,7 @@ $$
 3. **Probability Distance**: Although not a true metric, it provides a measure of how one distribution diverges from another.
 
 ### Relation of KL Divergence and Expected Log-Likelihood
+
 Minimizing the KL divergence \( D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) \) is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
 $$
@@ -533,6 +534,7 @@ $$
 $$
 
 #### Monte Carlo Estimation
+
 In practice, the expected log-likelihood can be estimated using Monte Carlo methods by averaging the log-likelihood over a finite set of samples from the data distribution:
 
 $$
