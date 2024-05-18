@@ -523,9 +523,11 @@ $$
 
 Minimizing the KL divergence \( D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) \) is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
-$$
-D_{\text{KL}}(p_{\text{data}} \| p_{\theta}) = - \mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)] + \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)]
-$$
+<div align="center">
+
+<img src="https://latex.codecogs.com/svg.image?&space;D_{\text{KL}}(p_{\text{data}}\|p_{\theta})=-\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\theta}(x)]&plus;\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\text{data}}(x)]" title=" D_{\text{KL}}(p_{\text{data}}\|p_{\theta})=-\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]+\mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)]" />
+
+</div>
 
 Since the second term \( \mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)] \) is constant with respect to \( \theta \), minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
 
