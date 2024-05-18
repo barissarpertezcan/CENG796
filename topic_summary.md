@@ -476,7 +476,7 @@ This ensures that each pixel's color channels are generated in a manner that cap
 The primary goal of learning in the context of generative models is to estimate the underlying probability distribution of the data. By doing this, we can generate new data points that resemble the training data. The learned model should capture the complexities and nuances of the data distribution, allowing for the generation of realistic and coherent samples.
 
 ### Learning as Density Estimation
-Learning a generative model can be viewed as a density estimation problem. We aim to find a probability distribution \( p_{\theta}(x) \) parameterized by \( \theta \) that approximates the true data distribution \( p_{\text{data}}(x) \). This involves adjusting the parameters \( \theta \) to maximize the likelihood of the observed data.
+Learning a generative model can be viewed as a density estimation problem. We aim to find a probability distribution $p_{\theta}(x)$ parameterized by $\theta$ that approximates the true data distribution $p_{\text{data}}(x)$. This involves adjusting the parameters $\theta$ to maximize the likelihood of the observed data.
 
 ## Maximum Likelihood Estimation (MLE)
 
@@ -493,10 +493,10 @@ $$
 D_{\text{KL}}(p \| q) = \int p(x) \log \frac{p(x)}{q(x)} \, dx
 $$
 
-KL divergence is always non-negative and is zero if and only if \( p = q \) almost everywhere.
+KL divergence is always non-negative and is zero if and only if $p = q$ almost everywhere.
 
 #### Jensen's Inequality
-Jensen's Inequality is fundamental in the proof of the properties of KL divergence. Jensen's Inequality states that for a convex function \( f \), the following inequality holds:
+Jensen's Inequality is fundamental in the proof of the properties of KL divergence. Jensen's Inequality states that for a convex function $f$, the following inequality holds:
 
 $$
 f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]
@@ -515,8 +515,8 @@ D_{\text{KL}}(p \| q) = \sum_{x} p(x) \log \frac{p(x)}{q(x)} \geq 0
 $$
 
 #### Interpretations of KL Divergence
-1. **Information Gain**: KL divergence represents the expected amount of information gained when using distribution \( q \) instead of the true distribution \( p \).
-2. **Relative Entropy**: It measures the inefficiency of assuming that the distribution is \( q \) when the true distribution is \( p \).
+1. **Information Gain**: KL divergence represents the expected amount of information gained when using distribution $q$ instead of the true distribution $p$.
+2. **Relative Entropy**: It measures the inefficiency of assuming that the distribution is $q$ when the true distribution is $p$.
 3. **Probability Distance**: Although not a true metric, it provides a measure of how one distribution diverges from another.
 
 ### Relation of KL Divergence and Expected Log-Likelihood
@@ -552,7 +552,7 @@ where $x_{i}$ are samples from the data distribution.
 ## Finding Optimal Parameters with MLE
 
 ### Analytical Derivation (Coin Example)
-Consider a coin with probability \( \theta \) of landing heads. Given a set of observations \( D = \{x_1, x_2, \ldots, x_n\} \), where \( x_i \in \{0, 1\} \) (0 for tails, 1 for heads), the likelihood of the data is:
+Consider a coin with probability $\theta$ of landing heads. Given a set of observations $D = \{x_1, x_2, \ldots, x_n\}$, where $x_i \in \{0, 1\}$ (0 for tails, 1 for heads), the likelihood of the data is:
 
 $$
 p(D|\theta) = \prod_{i=1}^{n} \theta^{x_i} (1 - \theta)^{1 - x_i}
@@ -564,13 +564,13 @@ $$
 \log p(D|\theta) = \sum_{i=1}^{n} \left[ x_i \log \theta + (1 - x_i) \log (1 - \theta) \right]
 $$
 
-To find the maximum likelihood estimate of \( \theta \), we take the derivative of the log-likelihood with respect to \( \theta \) and set it to zero:
+To find the maximum likelihood estimate of $\theta$, we take the derivative of the log-likelihood with respect to $\theta$ and set it to zero:
 
 $$
 \frac{\partial}{\partial \theta} \log p(D|\theta) = \sum_{i=1}^{n} \left[ \frac{x_i}{\theta} - \frac{1 - x_i}{1 - \theta} \right] = 0
 $$
 
-Solving for \( \theta \), we get:
+Solving for $\theta$, we get:
 
 $$
 \hat{\theta} = \frac{1}{n} \sum_{i=1}^{n} x_i
@@ -579,13 +579,13 @@ $$
 This is the sample mean of the observed data, which makes intuitive sense as the best estimate for the probability of heads.
 
 ### MLE Learning with Gradient Descent in Neural Models
-For more complex models, especially those involving neural networks, we often use gradient descent to maximize the log-likelihood. The gradient of the log-likelihood with respect to the parameters \( \theta \) is computed, and the parameters are updated iteratively:
+For more complex models, especially those involving neural networks, we often use gradient descent to maximize the log-likelihood. The gradient of the log-likelihood with respect to the parameters $\theta$ is computed, and the parameters are updated iteratively:
 
 $$
 \theta \leftarrow \theta + \eta \nabla_{\theta} \log p(D|\theta)
 $$
 
-where \( \eta \) is the learning rate, and \( \nabla_{\theta} \log p(D|\theta) \) is the gradient of the log-likelihood with respect to \( \theta \).
+where $\eta$ is the learning rate, and $\nabla_{\theta} \log p(D|\theta)$ is the gradient of the log-likelihood with respect to $\theta$.
 
 In neural models, this process involves backpropagation to compute the gradients and updating the weights and biases of the network to maximize the log-likelihood of the observed data.
 
@@ -596,7 +596,7 @@ $$
 \hat{R}(\theta) = \frac{1}{n} \sum_{i=1}^{n} L(f_{\theta}(x_i), y_i)
 $$
 
-where \( L \) is the loss function, \( f_{\theta} \) is the model parameterized by \( \theta \), and \( (x_i, y_i) \) are the training examples.
+where $L$ is the loss function, $f_{\theta}$ is the model parameterized by $\theta$, and $(x_i, y_i)$ are the training examples.
 
 Overfitting occurs when a model learns the noise in the training data instead of the underlying distribution. This results in poor generalization to new, unseen data. Regularization techniques, such as L2 regularization, dropout, or early stopping, are often used to mitigate overfitting. These techniques add a penalty term to the loss function or modify the training process to prevent the model from fitting the noise in the training data.
 
