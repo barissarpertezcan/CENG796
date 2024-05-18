@@ -521,7 +521,7 @@ $$
 
 ### Relation of KL Divergence and Expected Log-Likelihood
 
-Minimizing the KL divergence <img src="https://latex.codecogs.com/svg.image?D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" title="D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" /> is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
+Minimizing the KL divergence <div> <img src="https://latex.codecogs.com/svg.image?D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" title="D_{\text{KL}}(p_{\text{data}}\|p_{\theta})" /> </div> is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
 <div align="center">
 
