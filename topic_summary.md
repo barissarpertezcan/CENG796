@@ -15,7 +15,8 @@ The MNIST dataset, which consists of handwritten digits, can be used as a motiva
 
 Given the dataset D of binarized MNIST images, each image has n = 28 x 28 = 784 pixels. Each pixel can either be black (0) or white (1).
 
-The goal is to learn a probability distribution $p(x) = p(x_1, x_2, ..., x_{784})$ over x in $\{0, 1\}^{784}$ such that when x is drawn from p(x), it looks like a digit. In other words, we want to generate new images that resemble the original handwritten digits.
+<!-- $\{0, 1\}^{784}$ does not work, curly braces is not shown, if you can fix it, please do so -->
+The goal is to learn a probability distribution $p(x) = p(x_1, x_2, ..., x_{784})$ over x in $(0, 1)^{784}$ such that when x is drawn from p(x), it looks like a digit. In other words, we want to generate new images that resemble the original handwritten digits.
 
 This process is done in two steps:
 
@@ -292,7 +293,7 @@ When dealing with RGB images, where each pixel consists of three color channels 
 #### Option 1: Single Random Variable
 Treat the RGB triplet $(r_i, g_i, b_i)$ as a single random variable:
 
-$$ p(\text{rgb}_i \mid x_{<i}) = \text{Softmax}([1, 256^3]) $$
+$$ p(\text{rgb}_ i \mid x_{< i}) = \text{Softmax}([1, 256^3]) $$
 
 In this approach, the RGB value is seen as a single random variable with $256^3$ different discrete variations.
 
