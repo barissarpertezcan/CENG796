@@ -79,18 +79,14 @@ class UNET_AttentionBlock(nn.Module):
     def __init__(self, n_head: int, n_embd: int, d_context=768, is_upsample=False):
         super().__init__()
         channels = n_head * n_embd
-        
+
         if is_upsample:
-            self.groupnorm = nn.GroupNorm(32, channels, eps=1e-6)
             self.conv_input = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
-            self.layernorm_1 = nn.LayerNorm(channels)
-            self.attention_1 = SelfAttention(n_head, channels, in_proj_bias=False)
             self.conv_output = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
-        else:
-            self.groupnorm = nn.GroupNorm(32, 2 * channels, eps=1e-6)
-            self.layernorm_1 = nn.LayerNorm(2 * channels)
-            self.attention_1 = SelfAttention(n_head, 2 * channels, in_proj_bias=False)
-            
+
+        self.groupnorm = nn.GroupNorm(32, channels, eps=1e-6)
+        self.layernorm_1 = nn.LayerNorm(channels)
+        self.attention_1 = SelfAttention(n_head, channels, in_proj_bias=False)
         self.layernorm_2 = nn.LayerNorm(channels)
         self.attention_2 = CrossAttention(n_head, channels, d_context, in_proj_bias=False)
         self.layernorm_3 = nn.LayerNorm(channels)
@@ -112,19 +108,25 @@ class UNET_AttentionBlock(nn.Module):
         x = self.linearLayer(x)
 
         # Get the shape of latent
-        batch_size, _, height, width = latent.shape
+        batch_size, channels, height, width = latent.shape
 
-        # Reshape and expand x to match the shape of latent
-        x = x.view(batch_size, -1, 1, 1).expand(-1, -1, height, width)  # Shape: (batch_size, channels, height, width)
+        # Flatten the latent tensor
+        latent = latent.view(batch_size, channels, height * width)
 
-        # Concatenate latent and x along the feature dimension
-        x = torch.cat((latent, x), dim=1)
+        # Reshape x to match the dimensions (Batch Size, Channels, 1)
+        x = x.view(batch_size, -1, 1)
+
+        # Concatenate x and latent along the spatial dimension
+        x = torch.cat((x, latent), dim=2)
 
         return x
 
     def forward(self, x, context, aug_emb=None, hidden_text_query=None, is_upsample=True):
         # x: (Batch_Size, Features, Height, Width)
         # context: (Batch_Size, Seq_Len, Dim)
+
+        # Get the shape of the input
+        n, c, h, w = x.shape
 
         if aug_emb is not None and hidden_text_query is not None and not is_upsample:
             # Prepare the input for the attention block
@@ -134,64 +136,51 @@ class UNET_AttentionBlock(nn.Module):
         if is_upsample:
             residue_long = x
         else:
-            residue_long, text_residue_long = x.chunk(2, dim=1)
+            # Ensure x is split correctly into 1 and the remaining along the spatial dimension
+            spatial_dim = x.shape[2] - 1  # The last dimension of x minus 1
+            text_residue_long, residue_long = x.split([1, spatial_dim], dim=2)
+            residue_long = residue_long.view(n, c, h, w)
 
-        # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height, Width)
+            # (Batch_Size, Channels, Width * Height + 1) -> (Batch_Size, Channels, 1, Width * Height + 1)
+            x = x.view(x.shape[0], x.shape[1], 1, -1)
+
+        # Apply group normalization
         x = self.groupnorm(x)
-        
-        # Apply the input convolution if the block is an upsample block
-        if is_upsample:
-            # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height, Width)
+
+        if not is_upsample:
+            # (Batch_Size, Channels, 1, Width * Height + 1) -> (Batch_Size, Channels, Width * Height + 1)
+            x = x.view(x.shape[0], x.shape[1], -1)
+        else:
+            # Apply the input convolution if the block is an upsample block
+            # (Batch_Size, Channels, Height, Width) -> (Batch_Size, Channels, Height, Width)
             x = self.conv_input(x)
+            
+            # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height * Width)
+            x = x.view((n, c, h * w))
         
-        # Get the shape of the input
-        n, c, h, w = x.shape
-        
-        # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height * Width)
-        x = x.view((n, c, h * w))
-        
-        # (Batch_Size, Features, Height * Width) -> (Batch_Size, Height * Width, Features)
+        # (Batch_Size, Features, Height * Width) -> (Batch_Size, Height * Width, Features) if upsample block
+        # (Batch_Size, Features, Height * Width + 1) -> (Batch_Size, Height * Width + 1, Features) if not upsample block
         x = x.transpose(-1, -2)
         
         # Normalization + Self-Attention with skip connection
-
-        # (Batch_Size, Height * Width, Features)
         residue_short = x
-        
-        # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x = self.layernorm_1(x)
-        
-        # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x = self.attention_1(x)
-        
-        # (Batch_Size, Height * Width, Features) + (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x += residue_short
 
         # Check if the block is an upsample block, if not, split the output into two parts
         if not is_upsample:
-            # Take the first half of the output (latent): Features -> Features / 2
-            x, hidden_text_query = x.chunk(2, dim=-1)
-
-            # The number of features is halved
-            c = c // 2
-        
-        # (Batch_Size, Height * Width, Features)
-        residue_short = x
+            # (Batch_Size, Height * Width + 1, Features) -> two tensors of shape (Batch_Size, 1, Features) and (Batch_Size, Height * Width, Features)
+            spatial_dim = x.shape[1] - 1  # The last dimension of x minus 1
+            hidden_text_query, x = x.split([1, spatial_dim], dim=1)
 
         # Normalization + Cross-Attention with skip connection
-        
-        # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
+        residue_short = x
         x = self.layernorm_2(x)
-        
-        # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x = self.attention_2(x, context)
-        
-        # (Batch_Size, Height * Width, Features) + (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x += residue_short
         
-        # (Batch_Size, Height * Width, Features)
         residue_short = x
-
         if not is_upsample:
             text_residue_short = hidden_text_query
 
@@ -199,35 +188,31 @@ class UNET_AttentionBlock(nn.Module):
         
         # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x = self.layernorm_3(x)
-
         if not is_upsample:
-            # (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
+            # (Batch_Size, 1, Features) -> (Batch_Size, 1, Features)
             hidden_text_query = self.layernorm_3(hidden_text_query)
         
         # GeGLU as implemented in the original code: https://github.com/CompVis/stable-diffusion/blob/21f890f9da3cfbeaba8e2ac3c425ee9e998d5229/ldm/modules/attention.py#L37C10-L37C10
         # (Batch_Size, Height * Width, Features) -> two tensors of shape (Batch_Size, Height * Width, Features * 4)
         x, gate = self.linear_geglu_1(x).chunk(2, dim=-1) 
-
         if not is_upsample:
-            # (Batch_Size, Height * Width, Features) -> two tensors of shape (Batch_Size, Height * Width, Features * 4)
+            # (Batch_Size, 1, Features) -> two tensors of shape (Batch_Size, 1, Features * 4)
             hidden_text_query, gate_text_query = self.text_linear_geglu_1(hidden_text_query).chunk(2, dim=-1)
         
         # Element-wise product: (Batch_Size, Height * Width, Features * 4) * (Batch_Size, Height * Width, Features * 4) -> (Batch_Size, Height * Width, Features * 4)
         x = x * F.gelu(gate)
-
         if not is_upsample:
-            # Element-wise product: (Batch_Size, Height * Width, Features * 4) * (Batch_Size, Height * Width, Features * 4) -> (Batch_Size, Height * Width, Features * 4)
+            # Element-wise product: (Batch_Size, 1, Features * 4) * (Batch_Size, 1, Features * 4) -> (Batch_Size, 1, Features * 4)
             hidden_text_query = hidden_text_query * F.gelu(gate_text_query)
         
-        # (Batch_Size, Height * Width, Features * 4) -> (Batch_Size, Height * Width, Features)
+        # (Batch_Size, Height * Width, Features * 4) -> (Batch_Size, Height * Width, Features) if upsample block
         x = self.linear_geglu_2(x)
-
         if not is_upsample:
+            # (Batch_Size, 1, Features * 4) -> (Batch_Size, 1, Features) if not upsample block
             hidden_text_query = self.text_linear_geglu_2(hidden_text_query)
         
         # (Batch_Size, Height * Width, Features) + (Batch_Size, Height * Width, Features) -> (Batch_Size, Height * Width, Features)
         x += residue_short
-
         if not is_upsample:
             hidden_text_query += text_residue_short
         
@@ -238,26 +223,17 @@ class UNET_AttentionBlock(nn.Module):
         x = x.view((n, c, h, w))
 
         if not is_upsample:
-            # (Batch_Size, Height * Width, Features) -> (Batch_Size, Features, Height * Width)
+            # (Batch_Size, 1, Features) -> (Batch_Size, Features, 1)
             hidden_text_query = hidden_text_query.transpose(-1, -2)
-
-            # (Batch_Size, Features, Height * Width) -> (Batch_Size, Features, Height, Width)
-            hidden_text_query = hidden_text_query.view((n, c, h, w))
 
             # Add the long skip connection to the output of the block
             hidden_text_query += text_residue_long
-
-            # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height * Width)
-            hidden_text_query = hidden_text_query.view((n, c, h * w))
             
-            # (Batch_Size, Features, Height * Width) -> (Batch_Size, Height * Width, Features)
-            hidden_text_query = hidden_text_query.transpose(-1, -2)            
+            # (Batch_Size, Features, 1) -> (Batch_Size, Features)
+            hidden_text_query = hidden_text_query.squeeze(-1)          
 
             # Apply the output linear layer to the hidden text query
             hidden_text_query = self.output_linearLayer(hidden_text_query)
-
-            # take average and normalize the hidden text query
-            hidden_text_query = F.normalize(hidden_text_query.mean(dim=1), p=2, dim=-1)
 
             return (x + residue_long, hidden_text_query)
 
