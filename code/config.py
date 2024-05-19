@@ -7,17 +7,20 @@ BATCH_SIZE = 16
 
 # training parameters
 first_epoch = 0
-num_train_epochs = 10
-latents_shape = (1, 4, LATENTS_HEIGHT, LATENTS_WIDTH)
+num_train_epochs = 6
 Lambda = 1.0
 
 # optimizer parameters
-learning_rate = 1e-4
+learning_rate = 1e-5
+discriminative_learning_rate = 1e-4  # New learning rate for discriminative tasks
 adam_beta1 = 0.9
 adam_beta2 = 0.999
-adam_weight_decay = 0.0
+adam_weight_decay = 1e-4
 adam_epsilon = 1e-8
 
 # checkpoint parameters
-checkpoints_total_limit = 1
 output_dir = "output"
+
+# EMA parameters
+ema_decay = 0.9999
+warmup_steps = 1000
