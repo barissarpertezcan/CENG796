@@ -23,6 +23,64 @@ class TimeEmbedding(nn.Module):
 
         return x
 
+
+class TransformerBlock(nn.Module):
+    def __init__(self, embed_dim, num_heads, ff_dim):
+        super(TransformerBlock, self).__init__()
+        self.attention = SelfAttention(num_heads, embed_dim, in_proj_bias=False)
+        self.layernorm1 = nn.LayerNorm(embed_dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(embed_dim, ff_dim),
+            nn.GELU(),
+            nn.Linear(ff_dim, embed_dim),
+        )
+        self.layernorm2 = nn.LayerNorm(embed_dim)
+
+    def forward(self, x):
+        # Self-attention
+        attn_output = self.attention(x)
+        x = self.layernorm1(x + attn_output)
+        # Feed-forward network
+        ffn_output = self.ffn(x)
+        x = self.layernorm2(x + ffn_output)
+        return x
+
+
+class UNet_Transformer(nn.Module):
+    def __init__(self, num_blocks=6, embed_dim=1280, num_heads=64, ff_dim=2048, text_query_dim=768):
+        super(UNet_Transformer, self).__init__()
+        self.text_query_projector = nn.Linear(text_query_dim, embed_dim)
+        self.transformer_blocks = nn.ModuleList(
+            [TransformerBlock(embed_dim, num_heads, ff_dim) for _ in range(num_blocks)]
+        )
+        self.linear_predictor = nn.Linear(embed_dim, text_query_dim)
+
+    def forward(self, image_features, text_query):
+        # Flatten image features (Batch_Size, Channels, Height, Width) -> (Batch_Size, Channels, Height * Width)
+        batch_size, channels, height, width = image_features.shape
+        image_features = image_features.view(batch_size, channels, height * width)  # (Batch_Size, 320, Height * Width)
+
+        # Project text query to the same dimension as image features
+        text_query = self.text_query_projector(text_query)  # (Batch_Size, 768) -> (Batch_Size, 320)
+
+        # Concatenate flattened image features and text query
+        text_query = text_query.unsqueeze(2)  # (Batch_Size, 320) -> (Batch_Size, 320, 1)
+        x = torch.cat((text_query, image_features), dim=2)  # (Batch_Size, 320, Height * Width + 1)
+        x = x.transpose(1, 2)  # (Batch_Size, Height * Width + 1, 320)
+
+        # Pass through transformer blocks
+        for block in self.transformer_blocks:
+            x = block(x)
+
+        # Separate text query
+        text_query = x[:, 0]  # (Batch_Size, 320)
+
+        # Apply the linear predictor to the text query token
+        predicted_text_query = self.linear_predictor(text_query)  # (Batch_Size, 768)
+
+        return predicted_text_query
+
+
 class UNET_ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_time=1280):
         super().__init__()
@@ -74,6 +132,7 @@ class UNET_ResidualBlock(nn.Module):
         
         # (Batch_Size, Out_Channels, Height, Width) + (Batch_Size, Out_Channels, Height, Width) -> (Batch_Size, Out_Channels, Height, Width)
         return merged + self.residual_layer(residue)
+
 
 class UNET_AttentionBlock(nn.Module):
     def __init__(self, n_head: int, n_embd: int, d_context=768, is_upsample=False):
@@ -241,6 +300,7 @@ class UNET_AttentionBlock(nn.Module):
         # (Batch_Size, Features, Height, Width) + (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height, Width)
         return self.conv_output(x) + residue_long
 
+
 class Upsample(nn.Module):
     def __init__(self, channels):
         super().__init__()
@@ -250,6 +310,7 @@ class Upsample(nn.Module):
         # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height * 2, Width * 2)
         x = F.interpolate(x, scale_factor=2, mode='nearest') 
         return self.conv(x)
+
 
 class SwitchSequential(nn.Sequential):
     def forward(self, x, context, time, aug_emb=None, hidden_text_query=None, is_upsample=True):
@@ -268,6 +329,7 @@ class SwitchSequential(nn.Sequential):
             return x, hidden_text_query
                     
         return x
+
 
 class UNET(nn.Module):
     def __init__(self):
@@ -359,6 +421,8 @@ class UNET(nn.Module):
             SwitchSequential(UNET_ResidualBlock(640, 320), UNET_AttentionBlock(8, 40, is_upsample=True)),
         ])
 
+        self.unet_transformer = UNet_Transformer()
+
     def forward(self, x, context, time, aug_emb):
         # x: (Batch_Size, 4, Height / 8, Width / 8)
         # context: (Batch_Size, Seq_Len, Dim) 
@@ -373,6 +437,9 @@ class UNET(nn.Module):
 
         # Get the output of the middle block of the UNET
         x, hidden_text_query = self.bottleneck(x, context, time, aug_emb, hidden_text_query, is_upsample=False)
+
+        # Pass through the UNet_Transformer
+        hidden_text_query = self.unet_transformer(x, hidden_text_query)
 
         # Get the output of the upsampling blocks
         for layers in self.decoders:
@@ -403,6 +470,7 @@ class UNET_OutputLayer(nn.Module):
         
         # (Batch_Size, 4, Height / 8, Width / 8) 
         return x
+
 
 class Diffusion(nn.Module):
     def __init__(self):
