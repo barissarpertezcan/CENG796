@@ -20,6 +20,8 @@ adam_epsilon = 1e-8
 
 # checkpoint parameters
 output_dir = "output"
+save_steps = 10000
+max_train_steps = 1000000
 
 # EMA parameters
 ema_decay = 0.9999

@@ -11,6 +11,7 @@ from config import *
 from diffusion import TransformerBlock, UNet_Transformer  # Ensure these are correctly imported
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cpu"  # Force CPU for now
 
 model_file = "./data/v1-5-pruned.ckpt"
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
@@ -66,10 +67,8 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
     global_step = 0
 
     best_loss = float('inf')  # Initialize best loss as infinity
+    best_step = 0
     accumulator = 0
-
-    # Create the output directory
-    os.makedirs(output_dir, exist_ok=True)
 
     # Move models to the device
     vae.to(device)
@@ -116,7 +115,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
             average_noisy_text_query = noisy_text_query.mean(dim=1)
             text_query = F.normalize(average_noisy_text_query, p=2, dim=-1)
 
-            # Randomly drop 10% of text and image conditions: classifier free guidance
+            # Randomly drop 10% of text and image conditions: Context Free Guidance
             if torch.rand(1).item() < 0.1:
                 text_query = torch.zeros_like(text_query)
             if torch.rand(1).item() < 0.1:
@@ -146,23 +145,29 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
                     'ema_state_dict': ema_unet.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                 }, save_path)
-                print(f"Saved state to {save_path}")
+                print(f"\nSaved state to {save_path}")
 
                 # Check if the current step's loss is the best
                 if accumulator / save_steps < best_loss:
                     best_loss = accumulator / save_steps
+                    best_step = global_step
                     best_save_path = os.path.join(output_dir, "best.pt")
                     torch.save({
                         'model_state_dict': unet.state_dict(),
                         'ema_state_dict': ema_unet.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                     }, best_save_path)
-                    print(f"New best model saved to {best_save_path}")
+                    print(f"New best model saved to {best_save_path} with loss {best_loss}")
+
+                s = 'Epoch: %d   Step: %d   Loss: %.5f   Best Loss: %.5f   Best Step: %d\n' % (epoch, global_step, accumulator / save_steps, best_loss, best_step)
+                print(s)
+                with open(os.path.join(output_dir, 'train_log.txt'), 'a') as f:
+                    f.write(s)
 
                 accumulator = 0.0
 
             end_time = time.time()
-            print(f"step_loss: {loss.item()}, time per step: {(end_time - start_time) / bsz}, step per second: {bsz / (end_time - start_time)}")
+            print(f"Step: {global_step}  Loss: {loss.item()}  Time: {end_time - start_time}")
 
             if global_step >= max_train_steps:
                 break
@@ -173,4 +178,35 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
 
 
 if __name__ == "__main__":
-    train(num_train_epochs=num_train_epochs)
+    s = '==> Training starts..'
+    s += f'\nModel file: {model_file}'
+    s += f'\nBatch size: {BATCH_SIZE}'
+    s += f'\nWidth: {WIDTH}'
+    s += f'\nHeight: {HEIGHT}'
+    s += f'\nLatents width: {LATENTS_WIDTH}'
+    s += f'\nLatents height: {LATENTS_HEIGHT}'
+    s += f'\nFirst epoch: {first_epoch}'
+    s += f'\nNumber of training epochs: {num_train_epochs}'
+    s += f'\nLambda: {Lambda}'
+    s += f'\nLearning rate: {learning_rate}'
+    s += f'\nDiscriminative learning rate: {discriminative_learning_rate}'
+    s += f'\nAdam beta1: {adam_beta1}'
+    s += f'\nAdam beta2: {adam_beta2}'
+    s += f'\nAdam weight decay: {adam_weight_decay}'
+    s += f'\nAdam epsilon: {adam_epsilon}'
+    s += f'\nEMA decay: {ema_decay}'
+    s += f'\nWarmup steps: {warmup_steps}'
+    s += f'\nOutput directory: {output_dir}'
+    s += f'\nSave steps: {save_steps}'
+    s += f'\nMax train steps: {max_train_steps}'
+    s += f'\nDevice: {DEVICE}'
+    s += f'\n\n'
+    print(s)
+
+    # Create the output directory
+    os.makedirs(output_dir, exist_ok=True)
+
+    with open(os.path.join(output_dir, 'train_log.txt'), 'w') as f:
+        f.write(s)
+
+    train(num_train_epochs=num_train_epochs, device=DEVICE, save_steps=save_steps, max_train_steps=max_train_steps)

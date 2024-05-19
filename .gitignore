@@ -161,5 +161,6 @@ cython_debug/
 
 data/
 images/
+code/output/
 
 .DS_Store
