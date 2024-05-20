@@ -3,7 +3,8 @@ WIDTH = 256
 HEIGHT = 256
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
-BATCH_SIZE = 16
+BATCH_SIZE = 2
+root_dir = "../dataset_deneme" # TODO: change root_dir with the path to the dataset according to your setup
 
 # training parameters
 first_epoch = 0

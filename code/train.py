@@ -86,9 +86,6 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
             images = batch["pixel_values"]
             texts = batch["input_ids"]
 
-            # Normalize pixel values to [-1, 1]
-            # images = images / 127.5 - 1.0
-
             # Move batch to the device
             images = images.to(device)
             texts = texts.to(device)
