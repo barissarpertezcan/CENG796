@@ -67,14 +67,26 @@ class CC3MDataset(Dataset):
 
     def _load_samples(self):
         samples = []
-        for dir_name in os.listdir(self.root_dir):
-            sample_dir = os.path.join(self.root_dir, dir_name)
-            if os.path.isdir(sample_dir):
-                image_path = os.path.join(sample_dir, f"{dir_name}.jpg")
-                text_path = os.path.join(sample_dir, f"{dir_name}.txt")
-                json_path = os.path.join(sample_dir, f"{dir_name}.json")
-                if os.path.exists(image_path) and os.path.exists(text_path) and os.path.exists(json_path):
-                    samples.append((image_path, text_path, json_path))
+
+        # Extract unique base names (without extensions)
+        base_names = set()
+        for file in os.listdir(self.root_dir):
+            base_name = file.split('.')[0]
+            base_names.add(base_name)
+
+        # Create samples
+        counter = 0
+        for base_name in base_names:
+            counter += 1
+            print(f"\rLoading samples: {counter}/{len(base_names)}", end="")
+            image_path = os.path.join(self.root_dir, f"{base_name}.jpg")
+            text_path = os.path.join(self.root_dir, f"{base_name}.txt")
+            json_path = os.path.join(self.root_dir, f"{base_name}.json")
+            if os.path.exists(image_path) and os.path.exists(text_path) and os.path.exists(json_path):
+                samples.append((image_path, text_path, json_path))
+                
+        print(f"\nLoaded {len(samples)} samples.\n")
+
         return samples
 
     def __len__(self):
