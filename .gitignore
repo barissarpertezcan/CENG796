@@ -162,8 +162,10 @@ cython_debug/
 data/
 images/
 code/output/
+output/
+dataset_deneme/
+cc3m/
 
 .DS_Store
 
 
-dataset_deneme/
