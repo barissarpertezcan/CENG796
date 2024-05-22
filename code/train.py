@@ -10,35 +10,52 @@ import time
 from config import *
 from diffusion import TransformerBlock, UNet_Transformer  # Ensure these are correctly imported
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DEVICE = "cpu"  # Force CPU for now
+import pipeline
+from PIL import Image
+from pathlib import Path
+from transformers import CLIPTokenizer
 
+# TEXT TO IMAGE
+tokenizer = CLIPTokenizer("./data/vocab.json", merges_file="./data/merges.txt")
+prompt1 = "A river with boats docked and houses in the background"
+prompt2 = "A piece of chocolate swirled cake on a plate"
+prompt3 = "A large bed sitting next to a small Christmas Tree surrounded by pictures"
+prompt4 = "A bear searching for food near the river"
+prompts = [prompt1, prompt2, prompt3, prompt4]
+uncond_prompt = ""  # Also known as negative prompt
+do_cfg = False
+cfg_scale = 8  # min: 1, max: 14
+
+# SAMPLER
+sampler = "ddpm"
+num_inference_steps = 50
+seed = 42
+
+# Set the device
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Load the models
 model_file = "./data/v1-5-pruned.ckpt"
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
-
-vae = models['encoder']
-text_encoder = models['clip']
-decoder = models['decoder']
-unet = models['diffusion']
 ddpm = DDPMSampler(generator=None)
 
-# Disable gradient computations for the VAE, DDPM, and text_encoder models
-for param in vae.parameters():
+# Disable gradient computations for the models['encoder'], DDPM, and models['clip'] models
+for param in models['encoder'].parameters():
     param.requires_grad = False
 
-for param in text_encoder.parameters():
+for param in models['clip'].parameters():
     param.requires_grad = False
 
-# Set the VAE and text_encoder to eval mode
-vae.eval()
-text_encoder.eval()
+# Set the models['encoder'] and models['clip'] to eval mode
+models['encoder'].eval()
+models['clip'].eval()
 
 # Separate parameters for discriminative tasks
 discriminative_params = []
 non_discriminative_params = []
 
-for name, param in unet.named_parameters():
-    if isinstance(getattr(unet, name.split('.')[0], None), (TransformerBlock, UNet_Transformer)):
+for name, param in models['diffusion'].named_parameters():
+    if isinstance(getattr(models['diffusion'], name.split('.')[0], None), (TransformerBlock, UNet_Transformer)):
         discriminative_params.append(param)
     else:
         non_discriminative_params.append(param)
@@ -61,24 +78,26 @@ scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[
 ])
 
 # EMA setup
-ema_unet = torch.optim.swa_utils.AveragedModel(unet, avg_fn=lambda averaged_model_parameter, model_parameter, num_averaged: ema_decay * averaged_model_parameter + (1 - ema_decay) * model_parameter)
+# ema_unet = torch.optim.swa_utils.AveragedModel(models['diffusion'], avg_fn=lambda averaged_model_parameter, model_parameter, num_averaged: ema_decay * averaged_model_parameter + (1 - ema_decay) * model_parameter)
 
-def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=10000):
-    global_step = 0
+
+def train(num_train_epochs, device="cuda", save_steps=1000):
+    global_step = 1
 
     best_loss = float('inf')  # Initialize best loss as infinity
     best_step = 0
     accumulator = 0
 
     # Move models to the device
-    vae.to(device)
-    text_encoder.to(device)
-    unet.to(device)
-    ema_unet.to(device)
+    models['encoder'].to(device)
+    models['clip'].to(device)
+    models['diffusion'].to(device)
+    # ema_unet.to(device)
 
     num_train_epochs = tqdm(range(first_epoch, num_train_epochs), desc="Epoch")
     for epoch in num_train_epochs:
         train_loss = 0.0
+        num_train_steps = len(train_dataloader)
         for step, batch in enumerate(train_dataloader):
             start_time = time.time()
 
@@ -92,7 +111,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
 
             # Encode images to latent space
             encoder_noise = torch.randn(images.shape[0], 4, LATENTS_HEIGHT, LATENTS_WIDTH).to(device)  # Shape (BATCH_SIZE, 4, 32, 32)
-            latents = vae(images, encoder_noise)
+            latents = models['encoder'](images, encoder_noise)
 
             # Sample noise and timesteps for diffusion process
             bsz = latents.shape[0]
@@ -101,7 +120,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
 
             # Add noise to latents and texts
             noisy_latents, image_noise = ddpm.add_noise(latents, timesteps)
-            encoder_hidden_states = text_encoder(texts)
+            encoder_hidden_states = models['clip'](texts)
             noisy_text_query, text_noise = ddpm.add_noise(encoder_hidden_states, text_timesteps)
 
             # Get time embeddings
@@ -119,7 +138,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
                 noisy_latents = torch.zeros_like(noisy_latents)
 
             # Predict the noise residual and compute loss
-            image_pred, text_pred = unet(noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
+            image_pred, text_pred = models['diffusion'](noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
             image_loss = F.mse_loss(image_pred.float(), image_noise.float(), reduction="mean")
             text_loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
             
@@ -132,14 +151,17 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
-            ema_unet.update_parameters(unet)
+            # ema_unet.update_parameters(models['diffusion'])
 
-            if global_step % save_steps == 0 and global_step != 0:
+            end_time = time.time()
+            print(f"Step: {step+1}/{num_train_steps}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
+
+            if global_step % save_steps == 0:
                 # Save model and optimizer state
                 save_path = os.path.join(output_dir, f"last.pt")
                 torch.save({
-                    'model_state_dict': unet.state_dict(),
-                    'ema_state_dict': ema_unet.state_dict(),
+                    'model_state_dict': models['diffusion'].state_dict(),
+                    # 'ema_state_dict': ema_unet.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                 }, save_path)
                 print(f"\nSaved state to {save_path}")
@@ -150,24 +172,42 @@ def train(num_train_epochs, device="cuda", save_steps=1000, max_train_steps=1000
                     best_step = global_step
                     best_save_path = os.path.join(output_dir, "best.pt")
                     torch.save({
-                        'model_state_dict': unet.state_dict(),
-                        'ema_state_dict': ema_unet.state_dict(),
+                        'model_state_dict': models['diffusion'].state_dict(),
+                        # 'ema_state_dict': ema_unet.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                     }, best_save_path)
                     print(f"New best model saved to {best_save_path} with loss {best_loss}")
 
-                s = 'Epoch: %d   Step: %d   Loss: %.5f   Best Loss: %.5f   Best Step: %d\n' % (epoch, global_step, accumulator / save_steps, best_loss, best_step)
+                # Generate samples from the model
+                for i, prompt in enumerate(prompts):
+                    # Sample images from the model
+                    output_image = pipeline.generate(
+                        prompt=prompt,
+                        uncond_prompt=uncond_prompt,
+                        input_image=None,
+                        strength=0.9,
+                        do_cfg=do_cfg,
+                        cfg_scale=cfg_scale,
+                        sampler_name=sampler,
+                        n_inference_steps=num_inference_steps,
+                        seed=seed,
+                        models=models,
+                        device=DEVICE,
+                        idle_device=DEVICE,
+                        tokenizer=tokenizer,
+                    )
+
+                    # Save the generated image
+                    output_image = Image.fromarray(output_image)
+                    output_image.save(os.path.join(output_dir, "images", "prompt" + str(i+1), f"step{global_step}.png"))
+                
+                print(f"\nSaved images for step {global_step}")
+                s = 'Epoch: %d   Step: %d   Loss: %.5f   Best Loss: %.5f   Best Step: %d\n' % (epoch+1, global_step, accumulator / save_steps, best_loss, best_step)
                 print(s)
                 with open(os.path.join(output_dir, 'train_log.txt'), 'a') as f:
                     f.write(s)
 
                 accumulator = 0.0
-
-            end_time = time.time()
-            print(f"Step: {global_step}  Loss: {loss.item()}  Time: {end_time - start_time}")
-
-            if global_step >= max_train_steps:
-                break
 
             global_step += 1
 
@@ -195,15 +235,25 @@ if __name__ == "__main__":
     s += f'\nWarmup steps: {warmup_steps}'
     s += f'\nOutput directory: {output_dir}'
     s += f'\nSave steps: {save_steps}'
-    s += f'\nMax train steps: {max_train_steps}'
     s += f'\nDevice: {DEVICE}'
+    s += f'\nSampler: {sampler}'
+    s += f'\nNumber of inference steps: {num_inference_steps}'
+    s += f'\nSeed: {seed}'
+    for i, prompt in enumerate(prompts):
+        s += f'\nPrompt {i + 1}: {prompt}'
+    s += f'\nUnconditional prompt: {uncond_prompt}'
+    s += f'\nDo CFG: {do_cfg}'
+    s += f'\nCFG scale: {cfg_scale}'
     s += f'\n\n'
     print(s)
 
     # Create the output directory
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
+    for i in range(len(prompts)):
+        os.makedirs(os.path.join(output_dir, "images", "prompt" + str(i+1)), exist_ok=True)
 
     with open(os.path.join(output_dir, 'train_log.txt'), 'w') as f:
         f.write(s)
 
-    train(num_train_epochs=num_train_epochs, device=DEVICE, save_steps=save_steps, max_train_steps=max_train_steps)
+    train(num_train_epochs=num_train_epochs, device=DEVICE, save_steps=save_steps)
