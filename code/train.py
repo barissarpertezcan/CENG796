@@ -15,29 +15,35 @@ from PIL import Image
 from pathlib import Path
 from transformers import CLIPTokenizer
 
-# TEXT TO IMAGE
-tokenizer = CLIPTokenizer("./data/vocab.json", merges_file="./data/merges.txt")
-prompt1 = "A river with boats docked and houses in the background"
-prompt2 = "A piece of chocolate swirled cake on a plate"
-prompt3 = "A large bed sitting next to a small Christmas Tree surrounded by pictures"
-prompt4 = "A bear searching for food near the river"
-prompts = [prompt1, prompt2, prompt3, prompt4]
-uncond_prompt = ""  # Also known as negative prompt
-do_cfg = False
-cfg_scale = 8  # min: 1, max: 14
-
-# SAMPLER
-sampler = "ddpm"
-num_inference_steps = 50
-seed = 42
-
 # Set the device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load the models
-model_file = "./data/v1-5-pruned.ckpt"
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 ddpm = DDPMSampler(generator=None)
+
+if unet_file is not None:
+    # Load the UNet model
+    print(f"Loading UNet model from {unet_file}")
+    models['diffusion'].load_state_dict(torch.load(unet_file)['model_state_dict'])
+    if 'best_loss' in torch.load(unet_file):
+        best_loss = torch.load(unet_file)['best_loss']
+        best_step = torch.load(unet_file)['best_step']
+        last_loss = torch.load(unet_file)['last_loss']
+        last_step = torch.load(unet_file)['last_step']
+    else:
+        best_loss = 0.20889
+        best_step = 146000
+        last_loss = 0.20889
+        last_step = 146000
+else:
+    best_loss = float('inf')
+    best_step = 0
+    last_loss = 0.0
+    last_step = 0
+
+# TEXT TO IMAGE
+tokenizer = CLIPTokenizer("./data/vocab.json", merges_file="./data/merges.txt")
 
 # Disable gradient computations for the models['encoder'], DDPM, and models['clip'] models
 for param in models['encoder'].parameters():
@@ -66,6 +72,10 @@ optimizer = torch.optim.AdamW([
     {'params': discriminative_params, 'lr': discriminative_learning_rate}
 ], betas=(adam_beta1, adam_beta2), weight_decay=adam_weight_decay, eps=adam_epsilon)
 
+if unet_file is not None:
+    print(f"Loading optimizer state from {unet_file}")
+    optimizer.load_state_dict(torch.load(unet_file)['optimizer_state_dict'])
+
 # Linear warmup scheduler for non-discriminative parameters
 def warmup_lr_lambda(current_step: int):
     if current_step < warmup_steps:
@@ -82,10 +92,15 @@ scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[
 
 
 def train(num_train_epochs, device="cuda", save_steps=1000):
-    global_step = 1
+    global best_loss, best_step, last_loss, last_step
 
-    best_loss = float('inf')  # Initialize best loss as infinity
-    best_step = 0
+    if unet_file is not None:
+        first_epoch = last_step // len(train_dataloader)
+        global_step = last_step + 1
+    else:
+        first_epoch = 0
+        global_step = 0
+
     accumulator = 0
 
     # Move models to the device
@@ -141,7 +156,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
             image_pred, text_pred = models['diffusion'](noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
             image_loss = F.mse_loss(image_pred.float(), image_noise.float(), reduction="mean")
             text_loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
-            
+
             loss = image_loss + Lambda * text_loss
             train_loss += loss.item()
             accumulator += loss.item()
@@ -154,18 +169,13 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
             # ema_unet.update_parameters(models['diffusion'])
 
             end_time = time.time()
-            print(f"Step: {step+1}/{num_train_steps}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
+
+            if unet_file is not None and epoch == first_epoch:
+                print(f"Step: {step+1+last_step}/{num_train_steps+last_step}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
+            else:
+                print(f"Step: {step+1}/{num_train_steps}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
 
             if global_step % save_steps == 0:
-                # Save model and optimizer state
-                save_path = os.path.join(output_dir, f"last.pt")
-                torch.save({
-                    'model_state_dict': models['diffusion'].state_dict(),
-                    # 'ema_state_dict': ema_unet.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                }, save_path)
-                print(f"\nSaved state to {save_path}")
-
                 # Check if the current step's loss is the best
                 if accumulator / save_steps < best_loss:
                     best_loss = accumulator / save_steps
@@ -175,8 +185,25 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
                         'model_state_dict': models['diffusion'].state_dict(),
                         # 'ema_state_dict': ema_unet.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
+                        'best_loss': best_loss,
+                        'best_step': best_step,
+                        'last_loss': accumulator / save_steps,
+                        'last_step': global_step
                     }, best_save_path)
                     print(f"New best model saved to {best_save_path} with loss {best_loss}")
+
+                # Save model and optimizer state
+                save_path = os.path.join(output_dir, f"last.pt")
+                torch.save({
+                    'model_state_dict': models['diffusion'].state_dict(),
+                    # 'ema_state_dict': ema_unet.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'best_loss': best_loss,
+                    'best_step': best_step,
+                    'last_loss': accumulator / save_steps,
+                    'last_step': global_step
+                }, save_path)
+                print(f"\nSaved state to {save_path}")
 
                 # Generate samples from the model
                 for i, prompt in enumerate(prompts):
@@ -222,7 +249,7 @@ if __name__ == "__main__":
     s += f'\nHeight: {HEIGHT}'
     s += f'\nLatents width: {LATENTS_WIDTH}'
     s += f'\nLatents height: {LATENTS_HEIGHT}'
-    s += f'\nFirst epoch: {first_epoch}'
+    s += f'\nFirst epoch: {last_step // len(train_dataloader)}'
     s += f'\nNumber of training epochs: {num_train_epochs}'
     s += f'\nLambda: {Lambda}'
     s += f'\nLearning rate: {learning_rate}'

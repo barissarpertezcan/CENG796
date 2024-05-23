@@ -162,7 +162,7 @@ cython_debug/
 data/
 images/
 code/output/
-output/
+output*
 dataset_deneme/
 cc3m/
 
