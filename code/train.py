@@ -32,10 +32,10 @@ if unet_file is not None:
         last_loss = torch.load(unet_file)['last_loss']
         last_step = torch.load(unet_file)['last_step']
     else:
-        best_loss = 0.20889
-        best_step = 146000
-        last_loss = 0.20889
-        last_step = 146000
+        best_loss = float('inf')
+        best_step = 0
+        last_loss = 0.0
+        last_step = 0
 else:
     best_loss = float('inf')
     best_step = 0
