@@ -19,12 +19,12 @@ adam_weight_decay = 1e-4
 adam_epsilon = 1e-8
 
 # checkpoint parameters
-output_dir = "../output_1_resumed"
+output_dir = "../output_1_resumed_2"
 save_steps = 1000
 
 # Load the models
 model_file = "data/v1-5-pruned.ckpt"  
-unet_file = "../output_1/best.pt"  # Set to None to finetune from scratch
+unet_file = "../output_1_resumed/last.pt"  # Set to None to finetune from scratch
 
 # EMA parameters
 ema_decay = 0.9999
