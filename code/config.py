@@ -19,14 +19,22 @@ adam_beta2 = 0.999
 adam_weight_decay = 1e-4
 adam_epsilon = 1e-8
 
+# IMAGE TO TEXT
+test_dataset = "CIFAR10"  # Set to "CIFAR100" to use CIFAR100 dataset
+
 # output directory
-output_dir = "../results/output_1"
+train_output_dir = "../results/output_1"
+test_output_dir = "../results/" + test_dataset
+inference_output_dir = "../results/text_to_image/output_1/last"
 
 # Load the models
 model_file = "data/v1-5-pruned.ckpt"  
-unet_file = None  # Set to None to finetune from scratch
+train_unet_file = None  # Set to None to finetune from scratch, if specified, the diffusion model will be loaded from this file
+test_unet_file = "../results/output_1/last.pt" 
+inference_unet_file = "../results/output_1/last.pt"
 
 # EMA parameters
+use_ema = False  # Set to True to use EMA
 ema_decay = 0.9999
 warmup_steps = 1000
 
@@ -45,6 +53,3 @@ num_samples = 1
 sampler = "ddpm"
 num_inference_steps = 50
 seed = 42
-
-# IMAGE TO TEXT
-test_dataset = "CIFAR10"
