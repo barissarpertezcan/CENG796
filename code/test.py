@@ -17,10 +17,13 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 ddpm = DDPMSampler(generator=None)
 
-if unet_file is not None:
+if test_unet_file is not None:
     # Load the UNet model
-    print(f"Loading UNet model from {unet_file}")
-    models['diffusion'].load_state_dict(torch.load(unet_file)['model_state_dict'])
+    print(f"Loading UNet model from {test_unet_file}")
+    if use_ema:
+        models['diffusion'].load_state_dict(torch.load(test_unet_file)['ema_state_dict'])
+    else:
+        models['diffusion'].load_state_dict(torch.load(test_unet_file)['model_state_dict'])
 
 # TEXT TO IMAGE
 tokenizer = CLIPTokenizer("./data/vocab.json", merges_file="./data/merges.txt")
@@ -154,14 +157,15 @@ def test(device="cuda"):
     s = f"Accuracy: {correct_predictions}/{total_predictions} ({accuracy:.4f})\n"
     s += f"\nTest Loss: {test_loss / num_test_steps:.4f}"
     print(s)
-    with open(os.path.join(output_dir, 'test_results.txt'), 'a') as f:
+    with open(os.path.join(test_output_dir, 'test_results.txt'), 'a') as f:
         f.write(s)
 
 
 if __name__ == "__main__":
-    s = '==> Training starts..'
+    s = '==> Testing starts..'
+    s += f'\n\nTest dataset: {test_dataset}'
     s += f'\nModel file: {model_file}'
-    s += f'\nUNet file: {unet_file}'
+    s += f'\nUNet file: {test_unet_file}'
     s += f'\nBatch size: {BATCH_SIZE}'
     s += f'\nWidth: {WIDTH}'
     s += f'\nHeight: {HEIGHT}'
@@ -175,9 +179,10 @@ if __name__ == "__main__":
     s += f'\nAdam beta2: {adam_beta2}'
     s += f'\nAdam weight decay: {adam_weight_decay}'
     s += f'\nAdam epsilon: {adam_epsilon}'
+    s += f'\nUse EMA: {use_ema}'
     s += f'\nEMA decay: {ema_decay}'
     s += f'\nWarmup steps: {warmup_steps}'
-    s += f'\nOutput directory: {output_dir}'
+    s += f'\nOutput directory: {test_output_dir}'
     s += f'\nSave steps: {save_steps}'
     s += f'\nDevice: {DEVICE}'
     s += f'\nSampler: {sampler}'
@@ -192,9 +197,9 @@ if __name__ == "__main__":
     print(s)
 
     # Create the output directory
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(test_output_dir, exist_ok=True)
 
-    with open(os.path.join(output_dir, 'test_results.txt'), 'w') as f:
+    with open(os.path.join(test_output_dir, 'test_results.txt'), 'w') as f:
         f.write(s)
 
     test(device=DEVICE)
