@@ -244,6 +244,7 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
 if __name__ == "__main__":
     s = '==> Training starts..'
     s += f'\nModel file: {model_file}'
+    s += f'\nUNet file: {unet_file}'
     s += f'\nBatch size: {BATCH_SIZE}'
     s += f'\nWidth: {WIDTH}'
     s += f'\nHeight: {HEIGHT}'
