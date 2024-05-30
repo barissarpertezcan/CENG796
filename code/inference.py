@@ -14,18 +14,18 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Load the models
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 
-if unet_file is not None:
+if inference_unet_file is not None:
     # Load the UNet model
-    print(f"Loading UNet model from {unet_file}")
-    models['diffusion'].load_state_dict(torch.load(unet_file)['model_state_dict'])
+    print(f"Loading UNet model from {inference_unet_file}")
+    models['diffusion'].load_state_dict(torch.load(inference_unet_file)['model_state_dict'])
 
 # TEXT TO IMAGE
 tokenizer = CLIPTokenizer("./data/vocab.json", merges_file="./data/merges.txt")
 
 # Create the output directory
-os.makedirs(output_dir, exist_ok=True)
+os.makedirs(inference_output_dir, exist_ok=True)
 for i in range(len(prompts)):
-    os.makedirs(os.path.join(output_dir, "prompt" + str(i+1)), exist_ok=True)
+    os.makedirs(os.path.join(inference_output_dir, "prompt" + str(i+1)), exist_ok=True)
 
 # Generate samples from the model
 for i, prompt in enumerate(prompts):
@@ -55,5 +55,4 @@ for i, prompt in enumerate(prompts):
 
         # Save the generated image
         output_image = Image.fromarray(output_image)
-        output_image.save(os.path.join(output_dir, "prompt" + str(i+1), f"sample{j+1}.png"))
-                
+        output_image.save(os.path.join(inference_output_dir, "prompt" + str(i+1), f"sample{j+1}.png"))
