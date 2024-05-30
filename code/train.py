@@ -22,15 +22,15 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 ddpm = DDPMSampler(generator=None)
 
-if unet_file is not None:
+if train_unet_file is not None:
     # Load the UNet model
-    print(f"Loading UNet model from {unet_file}")
-    models['diffusion'].load_state_dict(torch.load(unet_file)['model_state_dict'])
-    if 'best_loss' in torch.load(unet_file):
-        best_loss = torch.load(unet_file)['best_loss']
-        best_step = torch.load(unet_file)['best_step']
-        last_loss = torch.load(unet_file)['last_loss']
-        last_step = torch.load(unet_file)['last_step']
+    print(f"Loading UNet model from {train_unet_file}")
+    models['diffusion'].load_state_dict(torch.load(train_unet_file)['model_state_dict'])
+    if 'best_loss' in torch.load(train_unet_file):
+        best_loss = torch.load(train_unet_file)['best_loss']
+        best_step = torch.load(train_unet_file)['best_step']
+        last_loss = torch.load(train_unet_file)['last_loss']
+        last_step = torch.load(train_unet_file)['last_step']
     else:
         best_loss = float('inf')
         best_step = 0
@@ -72,9 +72,9 @@ optimizer = torch.optim.AdamW([
     {'params': discriminative_params, 'lr': discriminative_learning_rate}
 ], betas=(adam_beta1, adam_beta2), weight_decay=adam_weight_decay, eps=adam_epsilon)
 
-if unet_file is not None:
-    print(f"Loading optimizer state from {unet_file}")
-    optimizer.load_state_dict(torch.load(unet_file)['optimizer_state_dict'])
+if train_unet_file is not None:
+    print(f"Loading optimizer state from {train_unet_file}")
+    optimizer.load_state_dict(torch.load(train_unet_file)['optimizer_state_dict'])
 
 # Linear warmup scheduler for non-discriminative parameters
 def warmup_lr_lambda(current_step: int):
@@ -88,13 +88,14 @@ scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=[
 ])
 
 # EMA setup
-# ema_unet = torch.optim.swa_utils.AveragedModel(models['diffusion'], avg_fn=lambda averaged_model_parameter, model_parameter, num_averaged: ema_decay * averaged_model_parameter + (1 - ema_decay) * model_parameter)
+if use_ema:
+    ema_unet = torch.optim.swa_utils.AveragedModel(models['diffusion'], avg_fn=lambda averaged_model_parameter, model_parameter, num_averaged: ema_decay * averaged_model_parameter + (1 - ema_decay) * model_parameter)
 
 
 def train(num_train_epochs, device="cuda", save_steps=1000):
     global best_loss, best_step, last_loss, last_step
 
-    if unet_file is not None:
+    if train_unet_file is not None:
         first_epoch = last_step // len(train_dataloader)
         global_step = last_step + 1
     else:
@@ -107,7 +108,8 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
     models['encoder'].to(device)
     models['clip'].to(device)
     models['diffusion'].to(device)
-    # ema_unet.to(device)
+    if use_ema:
+        ema_unet.to(device)
 
     num_train_epochs = tqdm(range(first_epoch, num_train_epochs), desc="Epoch")
     for epoch in num_train_epochs:
@@ -166,44 +168,67 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
-            # ema_unet.update_parameters(models['diffusion'])
+            if use_ema:
+                ema_unet.update_parameters(models['diffusion'])
 
             end_time = time.time()
 
-            if unet_file is not None and epoch == first_epoch:
+            if train_unet_file is not None and epoch == first_epoch:
                 print(f"Step: {step+1+last_step}/{num_train_steps+last_step}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
             else:
-                print(f"Step: {step+1}/{num_train_steps}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
+                print(f"Step: {step}/{num_train_steps}   Loss: {loss.item()}   Time: {end_time - start_time}", end="\r")
 
-            if global_step % save_steps == 0:
+            if global_step % save_steps == 0 and global_step > 0:
                 # Check if the current step's loss is the best
                 if accumulator / save_steps < best_loss:
                     best_loss = accumulator / save_steps
                     best_step = global_step
-                    best_save_path = os.path.join(output_dir, "best.pt")
+                    best_save_path = os.path.join(train_output_dir, "best.pt")
+                    if use_ema:
+                        torch.save({
+                            'model_state_dict': models['diffusion'].state_dict(),
+                            'ema_state_dict': ema_unet.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'best_loss': best_loss,
+                            'best_step': best_step,
+                            'last_loss': accumulator / save_steps,
+                            'last_step': global_step
+                        }, best_save_path) 
+                    else:
+                        torch.save({
+                            'model_state_dict': models['diffusion'].state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'best_loss': best_loss,
+                            'best_step': best_step,
+                            'last_loss': accumulator / save_steps,
+                            'last_step': global_step
+                        }, best_save_path)              
+
+                    print(f"\nNew best model saved to {best_save_path} with loss {best_loss}")
+
+                # Save model and optimizer state
+                last_save_path = os.path.join(train_output_dir, f"last.pt")
+                if use_ema:
                     torch.save({
                         'model_state_dict': models['diffusion'].state_dict(),
-                        # 'ema_state_dict': ema_unet.state_dict(),
+                        'ema_state_dict': ema_unet.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                         'best_loss': best_loss,
                         'best_step': best_step,
                         'last_loss': accumulator / save_steps,
                         'last_step': global_step
-                    }, best_save_path)
-                    print(f"New best model saved to {best_save_path} with loss {best_loss}")
-
-                # Save model and optimizer state
-                save_path = os.path.join(output_dir, f"last.pt")
-                torch.save({
-                    'model_state_dict': models['diffusion'].state_dict(),
-                    # 'ema_state_dict': ema_unet.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'best_loss': best_loss,
-                    'best_step': best_step,
-                    'last_loss': accumulator / save_steps,
-                    'last_step': global_step
-                }, save_path)
-                print(f"\nSaved state to {save_path}")
+                    }, last_save_path)
+                else:
+                    torch.save({
+                        'model_state_dict': models['diffusion'].state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'best_loss': best_loss,
+                        'best_step': best_step,
+                        'last_loss': accumulator / save_steps,
+                        'last_step': global_step
+                    }, last_save_path)
+                    
+                print(f"Saved state to {last_save_path}")
 
                 # Generate samples from the model
                 for i, prompt in enumerate(prompts):
@@ -226,12 +251,12 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
 
                     # Save the generated image
                     output_image = Image.fromarray(output_image)
-                    output_image.save(os.path.join(output_dir, "images", "prompt" + str(i+1), f"step{global_step}.png"))
+                    output_image.save(os.path.join(train_output_dir, "images", "prompt" + str(i+1), f"step{global_step}.png"))
                 
                 print(f"\nSaved images for step {global_step}")
                 s = 'Epoch: %d   Step: %d   Loss: %.5f   Best Loss: %.5f   Best Step: %d\n' % (epoch+1, global_step, accumulator / save_steps, best_loss, best_step)
                 print(s)
-                with open(os.path.join(output_dir, 'train_log.txt'), 'a') as f:
+                with open(os.path.join(train_output_dir, 'train_log.txt'), 'a') as f:
                     f.write(s)
 
                 accumulator = 0.0
@@ -243,8 +268,8 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
 
 if __name__ == "__main__":
     s = '==> Training starts..'
-    s += f'\nModel file: {model_file}'
-    s += f'\nUNet file: {unet_file}'
+    s += f'\n\nModel file: {model_file}'
+    s += f'\nUNet file: {train_unet_file}'
     s += f'\nBatch size: {BATCH_SIZE}'
     s += f'\nWidth: {WIDTH}'
     s += f'\nHeight: {HEIGHT}'
@@ -259,9 +284,10 @@ if __name__ == "__main__":
     s += f'\nAdam beta2: {adam_beta2}'
     s += f'\nAdam weight decay: {adam_weight_decay}'
     s += f'\nAdam epsilon: {adam_epsilon}'
+    s += f'\nUse EMA: {use_ema}'
     s += f'\nEMA decay: {ema_decay}'
     s += f'\nWarmup steps: {warmup_steps}'
-    s += f'\nOutput directory: {output_dir}'
+    s += f'\nOutput directory: {train_output_dir}'
     s += f'\nSave steps: {save_steps}'
     s += f'\nDevice: {DEVICE}'
     s += f'\nSampler: {sampler}'
@@ -276,12 +302,12 @@ if __name__ == "__main__":
     print(s)
 
     # Create the output directory
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
+    os.makedirs(train_output_dir, exist_ok=True)
+    os.makedirs(os.path.join(train_output_dir, "images"), exist_ok=True)
     for i in range(len(prompts)):
-        os.makedirs(os.path.join(output_dir, "images", "prompt" + str(i+1)), exist_ok=True)
+        os.makedirs(os.path.join(train_output_dir, "images", "prompt" + str(i+1)), exist_ok=True)
 
-    with open(os.path.join(output_dir, 'train_log.txt'), 'w') as f:
+    with open(os.path.join(train_output_dir, 'train_log.txt'), 'w') as f:
         f.write(s)
 
     train(num_train_epochs=num_train_epochs, device=DEVICE, save_steps=save_steps)
