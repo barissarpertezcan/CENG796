@@ -154,9 +154,9 @@ def test(device="cuda"):
 
     # Calculate total accuracy
     accuracy = correct_predictions / total_predictions
-    s = f"Accuracy: {correct_predictions}/{total_predictions} ({accuracy:.4f})\n"
+    s = f"Accuracy: %.2f%% ({correct_predictions}/{total_predictions})" % (accuracy * 100)
     s += f"\nTest Loss: {test_loss / num_test_steps:.4f}"
-    print(s)
+    print("\n" + s)
     with open(os.path.join(test_output_dir, 'test_results.txt'), 'a') as f:
         f.write(s)
 
