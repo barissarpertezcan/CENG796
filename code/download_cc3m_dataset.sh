@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# Check if train and validation directories are provided as arguments
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <train_download_directory> <validation_download_directory>"
-    exit 1
-fi
-
 # Set the download directories from the arguments
-TRAIN_DOWNLOAD_DIR=$1
-VALIDATION_DOWNLOAD_DIR=$2
+TRAIN_DOWNLOAD_DIR=../dataset/cc3m/tar/train
+VALIDATION_DOWNLOAD_DIR=../dataset/cc3m/tar/val
 
 # Base URLs
 TRAIN_BASE_URL="https://huggingface.co/datasets/pixparse/cc3m-wds/resolve/main"
