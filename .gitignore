@@ -159,12 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-data/
-images/
-code/output/
-output*
-dataset_deneme/
-cc3m/
+dataset/
+results/
+code/data
 
 .DS_Store
 
