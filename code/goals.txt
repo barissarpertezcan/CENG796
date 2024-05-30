@@ -10,6 +10,10 @@ Row4: DiffDis on CIFAR10 and CIFAR100 datasets
 Qualitative Experiment Goal:
 Figure 4. Qualitative comparisons of Stable diffusion and DiffDis on MSCOCO zero-shot text-to-image generation.
 
+—— version 1 submission ——
+
 1. We did not change our experimental goals
 2. To validate our model's training, we're using a dummy dataset that mimics the original CC3M dataset. Due to the CC3M's large size (~430 GB) and our resource constraints, completing training before the May 5 deadline for the first version is unfeasible. However, we aim to finish training by the second version's deadline on May 31.
 3. We've discovered that the transformer for the image-to-text task is a separate entity from our UNet model. It consists of self-attention blocks, indicating it could be constructed using UNet's self-attention blocks for a simpler implementation. However, this approach is still being considered.
+
+—— version 2 submission ——
