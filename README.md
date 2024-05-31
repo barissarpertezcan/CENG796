@@ -18,7 +18,7 @@ Please see the jupyter notebook file [main.ipynb](code/main.ipynb) for a summary
 
 # Project Setup
 
-## Setup Environment
+### Setup Environment
 
 To set up the environment for this project, please follow the steps below:
 
@@ -42,21 +42,21 @@ To set up the environment for this project, please follow the steps below:
     pip install -r requirements.txt
     ```
 
-## Change Directory
+### Change Directory
 
 Navigate to the `scripts` directory where the project scripts are located:
 ```bash
 cd scripts
 ```
 
-## Download Data
+### Download Data
 
 To download the necessary data for the project, execute the following script:
 ```bash
 bash download_data.sh
 ```
 
-## Download and Extract CC3M Dataset
+### Download and Extract CC3M Dataset
 
 To download and extract the CC3M dataset, run the following scripts in order:
 
@@ -72,7 +72,7 @@ To download and extract the CC3M dataset, run the following scripts in order:
 
 # Usage
 
-## Change Directory
+### Change Directory
 
 Navigate to the `code` directory where the project code is located:
 ```bash
