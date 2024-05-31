@@ -72,6 +72,13 @@ To download and extract the CC3M dataset, run the following scripts in order:
 
 # Usage
 
+## Change Directory
+
+Navigate to the `code` directory where the project code is located:
+```bash
+cd code
+```
+
 1. **Training**: Run the following command to train the model:
     ```bash
     python train.py
