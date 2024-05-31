@@ -4,9 +4,10 @@ Runhui Huang, Jianhua Han, Guansong Lu, Xiaodan Liang, Yihan Zeng, Wei Zhang, an
 
 *ICCV 2023*
 
-![Sample Image](code/images/sample_image.png)
-
-*Sampled image using the prompt: A large bed sitting next to a small Christmas Tree surrounded by pictures*
+<div align="center">
+    <img src="code/images/sample_image.png" alt="Sample Image">
+    <p><em>Sampled image using the prompt: A large bed sitting next to a small Christmas Tree surrounded by pictures</em></p>
+</div>
 
 This folder provides a re-implementation of this paper in PyTorch, developed as part of the course METU CENG 796 - Deep Generative Models. The re-implementation is provided by:
 * Furkan Genç, genc.furkan@metu.edu.tr 
