@@ -53,7 +53,7 @@ cd scripts
 
 To download the necessary data for the project, execute the following script:
 ```bash
-bash download_data.sh
+bash scripts/download_data.sh
 ```
 
 ## Download and Extract CC3M Dataset
@@ -62,15 +62,22 @@ To download and extract the CC3M dataset, run the following scripts in order:
 
 1. **Download the CC3M dataset**:
     ```bash
-    bash download_cc3m_dataset.sh
+    bash scripts/download_cc3m_dataset.sh
     ```
 
 2. **Extract the downloaded CC3M dataset**:
     ```bash
-    bash extract_cc3m_dataset.sh
+    bash scripts/extract_cc3m_dataset.sh
     ```
 
 # Usage
+
+## Change Directory
+
+Navigate to the `code` directory where the project code is located:
+```bash
+cd code
+```
 
 1. **Training**: Run the following command to train the model:
     ```bash
