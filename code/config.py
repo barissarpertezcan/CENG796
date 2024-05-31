@@ -4,7 +4,7 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 BATCH_SIZE = 1
-root_dir = "../dataset/cc3m/train" # TODO: change root_dir with the path to the dataset according to your setup
+root_dir = "../dataset/cc3m/train"
 
 # training parameters
 num_train_epochs = 6
