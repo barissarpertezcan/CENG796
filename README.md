@@ -1,24 +1,53 @@
-# pytorch-stable-diffusion
-PyTorch implementation of Stable Diffusion from scratch
+# Project Setup
 
-## Download weights and tokenizer files:
+## Setup Environment
 
-1. Download `vocab.json` and `merges.txt` from https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main/tokenizer and save them in the `data` folder
-2. Download `v1-5-pruned-emaonly.ckpt` from https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main and save it in the `data` folder
+To set up the environment for this project, please follow the steps below:
 
-## Tested fine-tuned models:
+1. **Create a new conda environment** named `DiffDis`:
+    ```bash
+    conda create -n DiffDis
+    ```
 
-Just download the `ckpt` file from any fine-tuned SD (up to v1.5).
+2. **Activate** the newly created environment:
+    ```bash
+    conda activate DiffDis
+    ```
 
-1. InkPunk Diffusion: https://huggingface.co/Envvi/Inkpunk-Diffusion/tree/main
-2. Illustration Diffusion (Hollie Mengert): https://huggingface.co/ogkalu/Illustration-Diffusion/tree/main
+3. **Install PyTorch** and related libraries with CUDA support:
+    ```bash
+    conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
+    ```
 
-## Special thanks
+4. **Install additional required Python packages** from the `requirements.txt` file:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-Special thanks to the following repositories:
+## Change Directory
 
-1. https://github.com/CompVis/stable-diffusion/
-1. https://github.com/divamgupta/stable-diffusion-tensorflow
-1. https://github.com/kjsman/stable-diffusion-pytorch
-1. https://github.com/huggingface/diffusers/
+Navigate to the `code` directory where the project scripts are located:
+```bash
+cd code
+```
 
+## Download Data
+
+To download the necessary data for the project, execute the following script:
+```bash
+bash download_data.sh
+```
+
+## Download and Extract CC3M Dataset
+
+To download and extract the CC3M dataset, run the following scripts in order:
+
+1. **Download the CC3M dataset**:
+    ```bash
+    bash download_cc3m_dataset.sh
+    ```
+
+2. **Extract the downloaded CC3M dataset**:
+    ```bash
+    bash extract_cc3m_dataset.sh
+    ```
