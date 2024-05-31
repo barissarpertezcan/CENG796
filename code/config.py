@@ -1,4 +1,9 @@
-# define the constants 
+import torch
+
+# Set the device
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# define the constants
 WIDTH = 512
 HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
@@ -18,6 +23,7 @@ adam_beta1 = 0.9
 adam_beta2 = 0.999
 adam_weight_decay = 1e-4
 adam_epsilon = 1e-8
+use_contrastive_loss = False
 
 # IMAGE TO TEXT
 test_dataset = "CIFAR10"  # Set to "CIFAR100" to use CIFAR100 dataset
@@ -28,10 +34,10 @@ test_output_dir = "../results/" + test_dataset
 inference_output_dir = "../results/text_to_image/output_1/last"
 
 # Load the models
-model_file = "data/v1-5-pruned.ckpt"  
+model_file = "data/v1-5-pruned.ckpt"
 train_unet_file = None  # Set to None to finetune from scratch, if specified, the diffusion model will be loaded from this file
-test_unet_file = "../results/output_1/last.pt" 
-inference_unet_file = "../results/output_1/last.pt"
+test_unet_file = "data/last.pt"
+inference_unet_file = "data/last.pt"
 
 # EMA parameters
 use_ema = False  # Set to True to use EMA

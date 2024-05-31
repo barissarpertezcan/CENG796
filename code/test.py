@@ -10,9 +10,6 @@ import time
 from config import *
 from transformers import CLIPTokenizer
 
-# Set the device
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 # Load the models
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 ddpm = DDPMSampler(generator=None)

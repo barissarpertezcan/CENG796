@@ -15,9 +15,6 @@ from PIL import Image
 from pathlib import Path
 from transformers import CLIPTokenizer
 
-# Set the device
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 # Load the models
 models = model_loader.preload_models_from_standard_weights(model_file, DEVICE)
 ddpm = DDPMSampler(generator=None)
@@ -157,8 +154,16 @@ def train(num_train_epochs, device="cuda", save_steps=1000):
             # Predict the noise residual and compute loss
             image_pred, text_pred = models['diffusion'](noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
             image_loss = F.mse_loss(image_pred.float(), image_noise.float(), reduction="mean")
-            text_loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
-
+            
+            if use_contrastive_loss:
+                # Assuming margin is predefined, e.g., margin = 1.0
+                margin = 1.0
+                # Assuming all pairs are similar
+                target = torch.ones(text_pred.size(0)).to(device)
+                text_loss = F.cosine_embedding_loss(text_pred.float(), text_query.float(), target, margin)
+            else:
+                text_loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
+            
             loss = image_loss + Lambda * text_loss
             train_loss += loss.item()
             accumulator += loss.item()

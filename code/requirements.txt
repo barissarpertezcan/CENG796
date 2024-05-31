@@ -6,3 +6,4 @@ tqdm
 transformers
 lightning
 pillow
+gdown

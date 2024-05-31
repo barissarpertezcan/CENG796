@@ -44,7 +44,7 @@ To set up the environment for this project, please follow the steps below:
 
 ## Change Directory
 
-Navigate to the `code` directory where the project scripts are located:
+Navigate to the `scripts` directory where the project scripts are located:
 ```bash
 cd scripts
 ```
@@ -69,3 +69,26 @@ To download and extract the CC3M dataset, run the following scripts in order:
     ```bash
     bash extract_cc3m_dataset.sh
     ```
+
+# Usage
+
+1. **Training**: Run the following command to train the model:
+    ```bash
+    python train.py
+    ```
+
+2. **Testing**: Run the following command to test the model:
+    ```bash
+    python test.py
+    ```
+
+3. **Inference**: Run the following command to generate images:
+    ```bash
+    python inference.py
+    ```
+
+**Note**: Adjust the `config.py` parameters according to your needs before running the scripts.
+
+### Pre-trained Models
+
+The model trained on the CC3M dataset for two-thirds of an epoch can be found in this [link](https://drive.google.com/uc?id=1iVTS0fYkmKkT4s5EcZoMC9L8-p29dW41).

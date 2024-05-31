@@ -17,3 +17,7 @@ Figure 4. Qualitative comparisons of Stable diffusion and DiffDis on MSCOCO zero
 3. We've discovered that the transformer for the image-to-text task is a separate entity from our UNet model. It consists of self-attention blocks, indicating it could be constructed using UNet's self-attention blocks for a simpler implementation. However, this approach is still being considered.
 
 —— version 2 submission ——
+
+1. We did not change our experimental goals.
+2. We reproduced the results we have targeted. For quantiative experiments, we used the CIFAR10 and CIFAR100 datasets and achieved the 91.27% and 90.26% accuracy respectively. For qualitative experiments, we used the MSCOCO dataset. The generated images were not as good as the original paper's results, but they were still acceptable.
+3. You can look at the challenges we faced in the main jupyter notebook.
