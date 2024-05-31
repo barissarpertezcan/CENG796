@@ -1,3 +1,19 @@
+# [DiffDis: Empowering Generative Diffusion Model with Cross-Modal Discrimination Capability](https://openaccess.thecvf.com/content/ICCV2023/papers/Huang_DiffDis_Empowering_Generative_Diffusion_Model_with_Cross-Modal_Discrimination_Capability_ICCV_2023_paper.pdf)
+
+Runhui Huang, Jianhua Han, Guansong Lu, Xiaodan Liang, Yihan Zeng, Wei Zhang, and Hang Xu
+
+*ICCV 2023*
+
+![Sample Image](code/images/sample_image.png)
+*Sampled image using the prompt: A large bed sitting next to a small Christmas Tree surrounded by pictures*
+
+This folder provides a re-implementation of this paper in PyTorch, developed as part of the course METU CENG 796 - Deep Generative Models. The re-implementation is provided by:
+* Furkan Genç, genc.furkan@metu.edu.tr 
+* Barış Sarper Tezcan, baris.tezcan@metu.edu.tr
+
+Please see the jupyter notebook file [main.ipynb](code/main.ipynb) for a summary of paper, the implementation notes and our experimental results
+
+
 # Project Setup
 
 ## Setup Environment
