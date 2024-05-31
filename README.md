@@ -44,7 +44,7 @@ To set up the environment for this project, please follow the steps below:
 
 Navigate to the `code` directory where the project scripts are located:
 ```bash
-cd code
+cd scripts
 ```
 
 ## Download Data
