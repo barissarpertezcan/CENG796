@@ -184,6 +184,7 @@ if __name__ == "__main__":
     s += f'\nAdam beta2: {adam_beta2}'
     s += f'\nAdam weight decay: {adam_weight_decay}'
     s += f'\nAdam epsilon: {adam_epsilon}'
+    s += f'\nUse contrastive loss: {use_contrastive_loss}'
     s += f'\nUse EMA: {use_ema}'
     s += f'\nEMA decay: {ema_decay}'
     s += f'\nWarmup steps: {warmup_steps}'
