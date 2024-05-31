@@ -23,7 +23,7 @@ adam_beta1 = 0.9
 adam_beta2 = 0.999
 adam_weight_decay = 1e-4
 adam_epsilon = 1e-8
-use_contrastive_loss = False
+use_contrastive_loss = True
 
 # IMAGE TO TEXT
 test_dataset = "CIFAR10"  # Set to "CIFAR100" to use CIFAR100 dataset
