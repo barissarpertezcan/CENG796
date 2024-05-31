@@ -134,7 +134,15 @@ def test(device="cuda"):
             _, text_pred = models['diffusion'](noisy_latents, encoder_hidden_states, image_time_embeddings, text_time_embeddings, text_query)
                 
             # Calculate loss
-            loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
+            if use_contrastive_loss:
+                # Assuming margin is predefined, e.g., margin = 1.0
+                margin = 1.0
+                # Assuming all pairs are similar
+                target = torch.ones(text_pred.size(0)).to(device)
+                loss = F.cosine_embedding_loss(text_pred.float(), text_query.float(), target, margin)
+            else:
+                loss = F.mse_loss(text_pred.float(), text_query.float(), reduction="mean")
+            
             test_loss += loss.item()
             
             # Calculate cosine similarity between the generated text query and class embeddings
