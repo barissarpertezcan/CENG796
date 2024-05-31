@@ -42,11 +42,18 @@ To set up the environment for this project, please follow the steps below:
     pip install -r requirements.txt
     ```
 
+## Change Directory
+
+Navigate to the `scripts` directory where the project scripts are located:
+```bash
+cd scripts
+```
+
 ## Download Data
 
 To download the necessary data for the project, execute the following script:
 ```bash
-bash scripts/download_data.sh
+bash download_data.sh
 ```
 
 ## Download and Extract CC3M Dataset
@@ -55,12 +62,12 @@ To download and extract the CC3M dataset, run the following scripts in order:
 
 1. **Download the CC3M dataset**:
     ```bash
-    bash scripts/download_cc3m_dataset.sh
+    bash download_cc3m_dataset.sh
     ```
 
 2. **Extract the downloaded CC3M dataset**:
     ```bash
-    bash scripts/extract_cc3m_dataset.sh
+    bash extract_cc3m_dataset.sh
     ```
 
 # Usage
