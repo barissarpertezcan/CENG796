@@ -42,13 +42,6 @@ To set up the environment for this project, please follow the steps below:
     pip install -r requirements.txt
     ```
 
-## Change Directory
-
-Navigate to the `scripts` directory where the project scripts are located:
-```bash
-cd scripts
-```
-
 ## Download Data
 
 To download the necessary data for the project, execute the following script:
