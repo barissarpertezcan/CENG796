@@ -260,7 +260,7 @@ $$ 1 + 2 + 3 + \ldots + n \approx \frac{n^2}{2} $$
 
 ![FVSBN Results](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_results.png)
 <div align="center">
-Figure: FVSBN Results from Learning Deep Sigmoid Belief Networks with Data Augmentation. Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model 
+Figure: FVSBN Results from "Learning Deep Sigmoid Belief Networks with Data Augmentation" by Gan et al. (2015). Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model 
 </div>
 
 ### Neural Autoregressive Density Estimation (NADE)
@@ -330,14 +330,14 @@ If $h_i \in \mathbb{R}^d$, the total number of parameters is linear in $n$:
 ![NADE Results](src/autoregressiveModels_maximumLikelihoodEstimation/nade_results.png)
 
 <div align="center">
-Figure: NADE Results. Left: Samples, Right: Conditional Probabilities x̂ᵢ 
+Figure: NADE Results from "The Neural Autoregressive Distribution Estimator" by Hugo Larochelle and Iain Murray (2011). Left: Samples, Right: Conditional Probabilities x̂ᵢ 
 </div>
 
 
 ![FVSBN vs NADE](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_vs_nade.png)
 
 <div align="center">
-Figure: FVSBN vs NADE 
+Figure: FVSBN vs. NADE 
 </div>
 
 ## General Discrete Distributions
@@ -483,7 +483,9 @@ PixelCNN uses a convolutional neural network (CNN) with masked convolutions to e
    - **Mask B**: Used in subsequent layers to ensure the current pixel depends only on the previous pixels in the raster-scan order.
 
 
-![5x5 Masked Convolution](src/autoregressiveModels_maximumLikelihoodEstimation/masked_convolution.png)
+<p align="center">
+  <img src="src/autoregressiveModels_maximumLikelihoodEstimation/masked_convolution.png" alt="Mask A and B">
+</p>
 
 <div align="center">
 Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image
@@ -492,7 +494,7 @@ Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image
 ![Mask A and B](src/autoregressiveModels_maximumLikelihoodEstimation/mask_a_b.png)
 
 <div align="center">
-Figure: Mask A and B used in PixelCNN
+Figure: Mask A and B used in PixelCNN from "Pixel Recurrent Neural Networks" by van den Oord et al. (2016).
 </div>
 
 2. **Residual Blocks**: PixelCNN employs residual blocks to allow for deeper architectures and better gradient flow. Each residual block consists of two masked convolutional layers followed by a skip connection.
@@ -722,9 +724,11 @@ In this topic summary, we have explored:
 By understanding and applying these concepts, we can build robust generative models capable of creating high-quality and realistic data, pushing the boundaries of generative AI.
 
 ## References
-1. [PixelCNN Explained](https://sergeiturukin.com/2017/02/22/pixelcnn.html)
-2. Slide by Stefano Ermon, Aditya Grover. *Autoregressive Models, Maximum Likelihood Estimation*
+1. van den Oord, Aäron, et al. "Pixel recurrent neural networks." *International Conference on Machine Learning*. PMLR, 2016.
+2. Hugo Larochelle, Iain Murray. *The Neural Autoregressive Distribution Estimator.* AISTATS 2011.
 3. Gan, Zhe, et al. "Learning deep sigmoid belief networks with data augmentation." *Artificial Intelligence and Statistics.* PMLR, 2015.
-4. Hugo Larochelle, Iain Murray. *The Neural Autoregressive Distribution Estimator.* AISTATS 2011.
-5. Parts of this summary have been generated using ChatGPT 4.0. The information has been verified for accuracy and relevance.
+4. [PixelCNN Explained](https://sergeiturukin.com/2017/02/22/pixelcnn.html)
+5. Slide by Stefano Ermon, Aditya Grover. *Autoregressive Models, Maximum Likelihood Estimation*
+6. Parts of this summary have been generated using ChatGPT 4.0. The information has been verified for accuracy and relevance.
+
 
