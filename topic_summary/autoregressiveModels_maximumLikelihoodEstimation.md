@@ -47,8 +47,11 @@ These are two examples of chain rule factorization. While in theory, all factori
 
 The number of parameters required to model the joint distribution depends on the number of conditional distributions we need to learn. Let's consider a binary sequence of length $n$ as an example. In this case, each variable $x_i$ can take two values (0 or 1). For each variable $x_i$, we need to estimate the conditional probability $p(x_i \mid x_1, x_2, \ldots, x_{i-1})$.
 
-![Number of Parameters to Learn](topic_summary_images/number_of_parameter.png)
-*Figure: Number of Parameters to Learn*
+![Number of Parameters to Learn](src/autoregressiveModels_maximumLikelihoodEstimation/number_of_parameter.png)
+
+<div align="center">
+Figure: Number of Parameters to Learn
+</div>
 
 1. **For $x_1$:**
    - $p(x_1)$ requires 1 parameter (since it is unconditional).
@@ -193,8 +196,10 @@ $$ 1 + 2 + 3 + \ldots + n \approx \frac{n^2}{2} $$
 - **Likelihood evaluation**: The likelihood of the entire sequence can be evaluated in parallel because the conditionals are independent given the previous values. So, in training, we can evaluate the likelihood of the entire sequence in parallel since we know the previous values, i.e., the entire sequence/image.
 - **Generation**: The generation process is sequential because each value is generated based on the previous values.
 
-![Number of Parameters to Learn](topic_summary_images/fvsbn_results.png)
-*Figure: FVSBN Results from Learning Deep Sigmoid Belief Networks with Data Augmentation. Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model* 
+![FVSBN Results](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_results.png)
+<div align="center">
+Figure: FVSBN Results from Learning Deep Sigmoid Belief Networks with Data Augmentation. Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model 
+</div>
 
 ### Neural Autoregressive Density Estimation (NADE)
 NADE, or Neural Autoregressive Density Estimation, is a model introduced by Hugo Larochelle and Iain Murray in their paper "The Neural Autoregressive Distribution Estimator" at AISTATS 2011. NADE is an autoregressive model that uses neural networks to model the probability distribution of high-dimensional data.
@@ -214,8 +219,11 @@ where:
 - $c_i$ is a bias term.
 - $\sigma$ is the sigmoid activation function.
 
-![NADE Hidden Layer Calculation](topic_summary_images/nade_hidden_layer_calculation.png)
-*Figure: NADE Hidden Layer Calculation* 
+![NADE Hidden Layer Calculation](src/autoregressiveModels_maximumLikelihoodEstimation/nade_hidden_layer_calculation.png)
+
+<div align="center">
+Figure: NADE Hidden Layer Calculation 
+</div>
 
 #### Output Layer Calculation
 The conditional probability $\hat{x}_i$ is then computed as:
@@ -236,8 +244,11 @@ $$ h_2 = σ(A_2 x_1 + c_2) $$
 
 $$ h_3 = σ(A_3 (x_1, x_2)^T + c_3) $$
 
-![NADE](topic_summary_images/nade_parameter_sharing.png)
-*Figure: NADE Parameter Sharing* 
+![NADE](src/autoregressiveModels_maximumLikelihoodEstimation/nade_parameter_sharing.png)
+
+<div align="center">
+Figure: NADE Parameter Sharing 
+</div>
 
 #### Parameter Tying
 To reduce the number of parameters, NADE ties the weights across different conditionals. This means that the same weights are used for different conditional distributions. For example, the weights multiplied with $x_1$ in the hidden layer are shared across all conditionals that depend on $x_1$. So, the weights $A_2$ and $A_3$ share the same weights for $x_1$ and the weights $A_3$ and $A_4$ share the same weights for $x_2$. This parameter sharing reduces the number of parameters and helps in learning more efficiently.
@@ -254,12 +265,18 @@ If $h_i \in \mathbb{R}^d$, the total number of parameters is linear in $n$:
 - $n$ logistic regression coefficient vectors $\alpha_i, b_i \in \mathbb{R}^{d+1}$
 
 
-![NADE Results](topic_summary_images/nade_results.png)
-*Figure: NADE Results. Left: Samples, Right: Conditional Probabilities x̂ᵢ* 
+![NADE Results](src/autoregressiveModels_maximumLikelihoodEstimation/nade_results.png)
+
+<div align="center">
+Figure: NADE Results. Left: Samples, Right: Conditional Probabilities x̂ᵢ 
+</div>
 
 
-![FVSBN vs NADE](topic_summary_images/fvsbn_vs_nade.png)
-*Figure: FVSBN vs NADE* 
+![FVSBN vs NADE](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_vs_nade.png)
+
+<div align="center">
+Figure: FVSBN vs NADE 
+</div>
 
 ## General Discrete Distributions
 
@@ -404,13 +421,17 @@ PixelCNN uses a convolutional neural network (CNN) with masked convolutions to e
    - **Mask B**: Used in subsequent layers to ensure the current pixel depends only on the previous pixels in the raster-scan order.
 
 
-![5x5 Masked Convolution](topic_summary_images/masked_convolution.png)
+![5x5 Masked Convolution](src/autoregressiveModels_maximumLikelihoodEstimation/masked_convolution.png)
 
-*Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image*
+<div align="center">
+Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image
+</div>
 
-![Mask A and B](topic_summary_images/mask_a_b.png)
+![Mask A and B](src/autoregressiveModels_maximumLikelihoodEstimation/mask_a_b.png)
 
-*Figure: Mask A and B used in PixelCNN*
+<div align="center">
+Figure: Mask A and B used in PixelCNN
+</div>
 
 2. **Residual Blocks**: PixelCNN employs residual blocks to allow for deeper architectures and better gradient flow. Each residual block consists of two masked convolutional layers followed by a skip connection.
 
@@ -423,13 +444,17 @@ In Pixel CNN, convolution filters (hidden dimensions) are split into three group
 1. **Reserving Filters**: Reserve the first $N/3$ filters for the red channel, the next $N/3$ filters for the green channel, and the rest for the blue channel.
 2. **Virtual Splitting**: Virtually split the filters into groups of three, with each group corresponding to a different color channel.
 
-![Reserving Filters](topic_summary_images/reserving_filters.png)
+![Reserving Filters](src/autoregressiveModels_maximumLikelihoodEstimation/reserving_filters.png)
 
-*Figure: Reserving Filters for RGB Channels*
+<div align="center">
+Figure: Reserving Filters for RGB Channels
+</div>
 
-![Virtual Splitting](topic_summary_images/virtual_splitting.png)
+![Virtual Splitting](src/autoregressiveModels_maximumLikelihoodEstimation/virtual_splitting.png)
 
-*Figure: Virtual Splitting of Filters for RGB Channels*
+<div align="center">
+Figure: Virtual Splitting of Filters for RGB Channels
+</div>
 
 Either method can be used, but the second method (virtual splitting) is often preferred. This approach groups the filters in a way that corresponds to each color channel.
 
