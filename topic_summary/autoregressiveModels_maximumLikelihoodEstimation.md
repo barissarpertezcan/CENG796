@@ -726,4 +726,5 @@ By understanding and applying these concepts, we can build robust generative mod
 2. Slide by Stefano Ermon, Aditya Grover. *Autoregressive Models, Maximum Likelihood Estimation*
 3. Gan, Zhe, et al. "Learning deep sigmoid belief networks with data augmentation." *Artificial Intelligence and Statistics.* PMLR, 2015.
 4. Hugo Larochelle, Iain Murray. *The Neural Autoregressive Distribution Estimator.* AISTATS 2011.
+5. Parts of this summary have been generated using ChatGPT 4.0. The information has been verified for accuracy and relevance.
 
