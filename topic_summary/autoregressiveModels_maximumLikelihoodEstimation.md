@@ -629,29 +629,50 @@ $$
 
 Minimizing the KL divergence is equivalent to maximizing the expected log-likelihood. This relationship is derived from the definition of KL divergence:
 
+<!-- D_{KL}(p_{\text{data}} \parallel p_{\theta}) = -\mathbb{E}_{p_{\text{data}}} [\log p_{\theta}(x)] + \mathbb{E}_{p_{\text{data}}} [\log p_{\text{data}}(x)] -->
+
+$$
+D\_{KL}(p_{\text{data}} \parallel p_{\theta}) = -\mathbb{E}\_{p_{\text{data}}} [\log p_{\theta}(x)] + \mathbb{E}\_{p_{\text{data}}} [\log p_{\text{data}}(x)]
+$$
+
+<!--
 <div align="center">
 
 <img src="https://latex.codecogs.com/svg.image?&space;D_{\text{KL}}(p_{\text{data}}\|p_{\theta})=-\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\theta}(x)]&plus;\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\text{data}}(x)]" title=" D_{\text{KL}}(p_{\text{data}}\|p_{\theta})=-\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]+\mathbb{E}_{p_{\text{data}}}[\log p_{\text{data}}(x)]" />
 
 </div>
+-->
 
-Since the second term is constant with respect to <img src="https://latex.codecogs.com/svg.image?\theta&space;" title="\theta " />, minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
+Since the second term is constant with respect to $\theta$, minimizing KL divergence is equivalent to maximizing the expected log-likelihood:
+
+<!--
 
 <div align="center">
 
 <img src="https://latex.codecogs.com/svg.image?\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\theta}(x)]" title="\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]" />
 
 </div>
+-->
+
+$$ \mathbb{E}\_{p_{\text{data}}} [\log p_{\theta}(x)] $$
 
 #### Monte Carlo Estimation
 
 In practice, the expected log-likelihood can be estimated using Monte Carlo methods by averaging the log-likelihood over a finite set of samples from the data distribution:
+
+<!--
+$$
+\mathbb{E}_{p_{\text{data}}} [\log p_{\theta}(x)] \approx \frac{1}{N} \sum_{i=1}^{N} \log p_{\theta}(x_i)
+$$
 
 <div align="center">
 
 <img src="https://latex.codecogs.com/svg.image?\mathbb{E}_{p_{\text{data}}}[\log&space;p_{\theta}(x)]\approx\frac{1}{N}\sum_{i=1}^{N}\log&space;p_{\theta}(x_i)" title="\mathbb{E}_{p_{\text{data}}}[\log p_{\theta}(x)]\approx\frac{1}{N}\sum_{i=1}^{N}\log p_{\theta}(x_i)" />
 
 </div>
+-->
+
+$$ \mathbb{E}\_{p_{\text{data}}} [\log p_{\theta}(x)] \approx \frac{1}{N} \sum_{i=1}^{N} \log p_{\theta}(x_i) $$
 
 where $x_{i}$ are samples from the data distribution.
 
