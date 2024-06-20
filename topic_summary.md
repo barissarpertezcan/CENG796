@@ -168,11 +168,11 @@ $\hat{x}_ {i}$ represents the probability of the $i$-th pixel being 1 given the 
 To evaluate the joint probability $p(x_1, \ldots, x_{n})$, multiply all the conditionals (factors). For example:
 
 $$
-p(X_1 = 0, X_2 = 1, X_3 = 1, X_4 = 0) = (1 - \hat{x}_1) \times \hat{x}_2 \times \hat{x}_3 \times (1 - \hat{x}_4)
+p(X_1 = 0, X_2 = 1, X_3 = 1, X_4 = 0) = (1 - \hat{x}_1) \hat{x}_2 \hat{x}_3 (1 - \hat{x}_4)
 $$
 
 $$
-= (1 - \hat{x}_1) \times \hat{x}_2 (X_1 = 0) \times \hat{x}_3 (X_1 = 0, X_2 = 1) \times (1 - \hat{x}_4 (X_1 = 0, X_2 = 1, X_3 = 1))
+= (1 - \hat{x}_1) \hat{x}_2 (X_1 = 0) \hat{x}_3 (X_1 = 0, X_2 = 1) (1 - \hat{x}_4 (X_1 = 0, X_2 = 1, X_3 = 1))
 $$
 
 Observe that the probability of each pixel being 1 is conditioned on the previous pixels. This sequential dependency is a key characteristic of autoregressive models.
