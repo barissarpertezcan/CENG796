@@ -3,6 +3,8 @@ CENG796 Deep Generative Models
 
 Barış Sarper Tezcan, Furkan Genç
 
+Prepared as an activity of the [Middle East Technical University - CENG 796 Deep Generative Models course](<https://user.ceng.metu.edu.tr/~gcinbis/courses/Spring24/CENG796/index.html>).
+
 ## Introduction to Autoregressive Models
 
 ### What are autoregressive models?
@@ -32,12 +34,12 @@ In autoregressive models, the joint probability distribution of a sequence of va
 The chain rule factorization is used in autoregressive models because it provides a systematic way to decompose the joint distribution of a sequence into simpler, conditional distributions. This decomposition allows us to generate each value in the sequence one at a time, conditioned on the previous values.
 
 Given a sequence of variables $x = (x_1, x_2, ..., x_n)$, the joint probability p(x) can be factorized as:
-$$p(x) = p(x_1) * p(x_2 | x_1) * p(x_3 | x_1, x_2) * ... * p(x_n | x_1, x_2, ..., x_{n-1}) $$
+$$p(x) = p(x_1) p(x_2 | x_1) p(x_3 | x_1, x_2) ... p(x_n | x_1, x_2, ..., x_{n-1}) $$
 
 This factorization makes it feasible to model and generate sequences by sequentially sampling each variable conditioned on the previously generated variables.
 
 We can also consider different orderings of the variables in the chain rule factorization. For instance, p(x) can also be factorized as:
-$$p(x) = p(x_n) * p(x_{n-1} | x_n) * p(x_{n-2} | x_{n-1}, x_n) * ... * p(x_1 | x_2, x_3, ..., x_n) $$
+$$p(x) = p(x_n) p(x_{n-1} | x_n) p(x_{n-2} | x_{n-1}, x_n) ... p(x_1 | x_2, x_3, ..., x_n) $$
 
 These are two examples of chain rule factorization. While in theory, all factorizations are equivalent in terms of representing the joint distribution, it is more logical to choose the first one when modeling MNIST images. This is because the first example follows a natural and sequential dependency where each pixel depends on the previous ones in a raster scan order. This logical ordering simplifies the modeling process and aligns better with the structure of image data. Choosing this ordering is a modeling assumption that can make the model more interpretable and efficient.
 
@@ -87,8 +89,12 @@ To model the conditional distributions in chain rule factorization, Bayesian net
 
 #### Bayesian Networks
 
-![Number of Parameters to Learn](topic_summary_images/bayes_net.png)
+<!-- ![Number of Parameters to Learn](topic_summary_images/bayes_net.png)
 *Figure: Bayesian Network*
+- Bayes Net -->
+
+$$ p(x_1, x_2, x_3, x_4) \approx p_{CPT}(x_1) p_{CPT}(x_2 \mid x_1) p_{CPT}(x_3 \mid \cancel{x_1}, x_2) p_{CPT}(x_4 \mid x_1, \cancel{x_2, x_3}) $$
+
 
 - **Conditional Independence Assumptions**: Bayesian Networks rely on conditional independence assumptions, which simplify the model by assuming that certain variables are independent of others given their parents.
 - **Graphical Structure**: They use a directed acyclic graph (DAG) to represent the dependencies between variables.
@@ -96,8 +102,10 @@ To model the conditional distributions in chain rule factorization, Bayesian net
 
 #### Neural Models
 
-![Number of Parameters to Learn](topic_summary_images/neural_models.png)
-*Figure: Neural Models*
+<!-- ![Number of Parameters to Learn](topic_summary_images/neural_models.png)
+*Figure: Neural Models* -->
+
+$$ p(x_1, x_2, x_3, x_4) \approx p(x_1) p(x_2 \mid x_1) p_{Neural}(x_3 \mid x_1, x_2) p_{Neural}(x_4 \mid x_1, x_2, x_3) $$
 
 - **No Conditional Independence Assumptions**: Neural autoregressive models do not assume conditional independence. Instead, they use neural networks to directly model the conditional distributions.
 - **Flexibility**: Neural models can capture complex dependencies and interactions between variables without predefined independence assumptions.
@@ -112,7 +120,7 @@ To model the conditional distributions in chain rule factorization, Bayesian net
 To model autoregressive models, we start by using the chain rule of probability to factorize the joint probability distribution of a sequence of variables into a product of conditional probabilities. For a sequence of variables $x = (x_1, x_2, \dots, x_{n})$, without loss of generality, we can write the joint probability as:
 
 $$
-p(x_1, \ldots, x_{n}) = p(x_1) \cdot p(x_2 \mid x_1) \cdot p(x_3 \mid x_1, x_2) \cdot \ldots \cdot p(x_{n} \mid x_1, \ldots, x_{n-1})
+p(x_1, \ldots, x_{n}) = p(x_1) p(x_2 \mid x_1) p(x_3 \mid x_1, x_2) \ldots p(x_{n} \mid x_1, \ldots, x_{n-1})
 $$
 
 Some conditional distributions can be too complex to be stored in tabular form. Instead, we assume parameterized forms for these conditionals. This approach allows us to model the complex dependencies between variables more efficiently. For instance, we can use logistic regression or neural networks to parameterize the conditional distributions. Let's look at some models used for autoregressive density estimation. 
@@ -148,9 +156,11 @@ $$ \sigma(z) = \frac{1}{1 + e^{-z}} $$
 
 In FVSBN's the conditional variables $X_i \mid X_1, \ldots, X_{i-1}$ are Bernoulli random variables with parameters:
 
-<div align="center">
+<!-- <div align="center">
 <img src="https://latex.codecogs.com/svg.image?\hat{x}_i=p(X_i=1\mid&space;x_1,\ldots,x_{i-1};\alpha^i)=p(X_i=1\mid&space;x_{<i};\alpha^i)=\sigma\left(\alpha_0^i&plus;\sum_{j=1}^{i-1}\alpha_j^i&space;x_j\right)" />
-</div>
+</div> -->
+
+$$ \hat{x}_i = p(X_i = 1 \mid x_1, \ldots, x\_{i-1}; \alpha^i) = p(X_i = 1 \mid x\_{\lt i}; \alpha^i) = \sigma \left( \alpha_0^i + \sum\_{j=1}^{i-1} \alpha_j^i x_j \right) $$
 
 $\hat{x}_ {i}$ represents the probability of the $i$-th pixel being 1 given the previous pixels. The parameters $α^i = (α_0^ {i}, α_1^ i, \ldots, α_{i-1}^i)$ are learned during training.
 
@@ -300,14 +310,14 @@ In this approach, the RGB value is seen as a single random variable with $256^3$
 #### Option 2: Conditional Independence
 Assume conditional independence between the channels:
 
-$$ p(x_i \mid x_{< i}) = p(r_i \mid x_{< i}) \cdot p(g_i \mid x_{< i}) \cdot p(b_i \mid x_{< i}) $$
+$$ p(x_i \mid x_{< i}) = p(r_i \mid x_{< i}) p(g_i \mid x_{< i}) p(b_i \mid x_{< i}) $$
 
 In this approach, each color channel is modeled independently, given the previous pixels. Note that with this approach green channel will not know about the red channel, and blue channel will not know about the red and green channels during generation. This can lead to less coherent results but we can sample r, g and b channels in parallel.
 
 #### Option 3: Autoregressive Modeling
 Model the RGB channels sequentially in an autoregressive manner:
 
-$$ p(r_i, g_i, b_i \mid x_{< i}) = p(r_i \mid x_{< i}) \cdot p(g_i \mid x_{< i}, r_i) \cdot p(b_i \mid x_{< i}, r_i, g_i) $$
+$$ p(r_i, g_i, b_i \mid x_{< i}) = p(r_i \mid x_{< i}) p(g_i \mid x_{< i}, r_i) p(b_i \mid x_{< i}, r_i, g_i) $$
 
 This approach models the red channel first, then the green channel conditioned on the red channel, and finally the blue channel conditioned on both the red and green channels. In this option, the generation process is also sequential for channels, i.e., we first generate the red channel, then the green channel, and finally the blue channel.
 
@@ -326,17 +336,23 @@ $$ d(h) \approx x \quad \text{e.g.,} \quad d(h) = σ(Vh + c) $$
 ### Loss Function
 The loss function ensures that the reconstruction is close to the original input. For binary random variables:
 
-<!-- $$ \text{min}_{W ^ 1 , W ^ 2 , b ^ 1 , b ^ 2 , V , c} \sum_{x \in D} \sum_i - x_i \log \hat{x}_ i - (1 - x_i) \log (1 - \hat{x}_ i) $$ -->
+<!-- \min_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_{i} \left( -x_i \log \hat{x}_i - (1 - x_i) \log (1 - \hat{x}_i) \right) -->
 
-<div align="center">
+$$ \text{min}_{W ^ 1 , W ^ 2 , b ^ 1 , b ^ 2 , V , c} \sum\_{x\in D} \sum_i \left( -x_i \log \hat{x}_i - (1 - x_i) \log (1 - \hat{x}_i) \right) $$
+
+<!-- <div align="center">
 <img src="https://latex.codecogs.com/svg.image?\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in&space;D}\sum_i-x_i\log\hat{x}_&space;i-(1-x_i)\log(1-\hat{x}_&space;i)" title="\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in D}\sum_i-x_i\log\hat{x}_ i-(1-x_i)\log(1-\hat{x}_ i)" />
-</div>
+</div> -->
 
 For continuous random variables:
-<!-- $$ \text{min}_{W^1, W^2, b^1, b^2, V, c} \sum_{x \in D} \sum_i (x_i - \hat{x}_i)^2 $$ -->
+<!-- \text{min}_{W ^ 1 , W ^ 2 , b ^ 1 , b ^ 2 , V , c} \sum_{x \in D} \sum_i \left( x_i - \hat{x}_i \right) ^ 2 -->
+$$ \text{min}_{W ^ 1 , W ^ 2 , b ^ 1 , b ^ 2 , V , c} \sum\_{x\in D} \sum_i \left( x_i - \hat{x}_i \right) ^ 2 $$
+
+<!--
 <div align="center">
 <img src="https://latex.codecogs.com/svg.image?\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in&space;D}\sum_i(x_i-\hat{x}_i)^2" title="\text{min}_{W^1,W^2,b^1,b^2,V,c}\sum_{x\in D}\sum_i(x_i-\hat{x}_i)^2" />
 </div>
+-->
 
 ### Ensuring Meaningful Representations
 The encoder $e$ and decoder $d$ are constrained so that we don't learn identity mappings. The goal is to ensure that $e(x)$ is a meaningful, compressed representation of $x$, useful for feature learning.
@@ -375,7 +391,7 @@ PixelCNN is a deep learning model designed for image generation. It is an autore
 In Pixel CNN, RGB images are modeled such that each color channel is conditioned on the previous channels as well as all the previously generated pixels. The authors rewrite the distribution $p(x_i \mid x_{< i})$ as the following product:
 
 $$
-p(x_{i , R} \mid x_{< i}) \cdot p(x_{i , G} \mid x_{< i}, x_{i , R}) \cdot p(x_{i , B} \mid x_{< i}, x_{i , R}, x_{i , G})
+p(x_{i , R} \mid x_{< i}) p(x_{i , G} \mid x_{< i}, x_{i , R}) p(x_{i , B} \mid x_{< i}, x_{i , R}, x_{i , G})
 $$
 
 Each of the colors is thus conditioned on the other channels as well as on all the previously generated pixels.
@@ -431,15 +447,15 @@ $$
 
 For RGB images, the model learns to predict the red channel first, followed by the green channel conditioned on the red, and finally the blue channel conditioned on both the red and green channels:
 
-<!-- 
-$$
-\mathcal{L} = -\sum_{i=1}^{n} \left[ \log p(x_{i,R} \mid x_{<i}) + \log p(x_{i,G} \mid x_{<i}, x_{i,R}) + \log p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G}) \right]
-$$ 
--->
+<!-- \mathcal{L} = - \sum_{i=1}^{n} \left[ \log p(x_{i,R} \mid x_{<i}) + \log p(x_{i,G} \mid x_{<i}, x_{i,R}) + \log p(x_{i,B} \mid x_{<i}, x_{i,R}, x_{i,G}) \right] -->
 
+$$ \mathcal{L} = - \sum\_{i=1}^{n} \left[ \log p(x\_{i,R} \mid x\_{\lt i}) + \log p(x\_{i,G} \mid x\_{\lt i}, x\_{i,R}) + \log p(x\_{i,B} \mid x_{\lt i}, x\_{i,R}, x\_{i,G}) \right] $$
+
+<!--
 <div align="center">
 <img src="https://latex.codecogs.com/svg.image?\mathcal{L}=-\sum_{i=1}^{n}\left[\log&space;p(x_{i,R}\mid&space;x_{<i})&plus;\log&space;p(x_{i,G}\mid&space;x_{<i},x_{i,R})&plus;\log&space;p(x_{i,B}\mid&space;x_{<i},x_{i,R},x_{i,G})\right]" title="\mathcal{L}=-\sum_{i=1}^{n}\left[\log p(x_{i,R}\mid x_{<i})+\log p(x_{i,G}\mid x_{<i},x_{i,R})+\log p(x_{i,B}\mid x_{<i},x_{i,R},x_{i,G})\right]" />
 </div>
+-->
 
 This ensures that the model captures the dependencies between the color channels and all previously generated pixels during training.
 
