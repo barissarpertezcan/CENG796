@@ -112,7 +112,7 @@ The number of parameters required to model the joint distribution depends on the
 ![Number of Parameters to Learn](src/autoregressiveModels_maximumLikelihoodEstimation/number_of_parameter.png)
 
 <div align="center">
-Figure: Number of Parameters to Learn
+Figure 1: Number of Parameters to Learn
 </div>
 
 1. **For $x_1$:**
@@ -260,7 +260,7 @@ $$ 1 + 2 + 3 + \ldots + n \approx \frac{n^2}{2} $$
 
 ![FVSBN Results](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_results.png)
 <div align="center">
-Figure: FVSBN Results from "Learning Deep Sigmoid Belief Networks with Data Augmentation" by Gan et al. (2015). Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model 
+Figure 2: FVSBN Results from "Learning Deep Sigmoid Belief Networks with Data Augmentation" by Gan et al. (2015). Left: Training Data (Caltech 101 Silhouettes), Right: Samples from the model 
 </div>
 
 ### Neural Autoregressive Density Estimation (NADE)
@@ -284,7 +284,7 @@ where:
 ![NADE Hidden Layer Calculation](src/autoregressiveModels_maximumLikelihoodEstimation/nade_hidden_layer_calculation.png)
 
 <div align="center">
-Figure: NADE Hidden Layer Calculation 
+Figure 3: NADE Hidden Layer Calculation 
 </div>
 
 #### Output Layer Calculation
@@ -309,7 +309,7 @@ $$ h_3 = σ(A_3 (x_1, x_2)^T + c_3) $$
 ![NADE](src/autoregressiveModels_maximumLikelihoodEstimation/nade_parameter_sharing.png)
 
 <div align="center">
-Figure: NADE Parameter Sharing 
+Figure 4: NADE Parameter Sharing 
 </div>
 
 #### Parameter Tying
@@ -330,14 +330,14 @@ If $h_i \in \mathbb{R}^d$, the total number of parameters is linear in $n$:
 ![NADE Results](src/autoregressiveModels_maximumLikelihoodEstimation/nade_results.png)
 
 <div align="center">
-Figure: NADE Results from "The Neural Autoregressive Distribution Estimator" by Hugo Larochelle and Iain Murray (2011). Left: Samples, Right: Conditional Probabilities x̂ᵢ 
+Figure 5: NADE Results from "The Neural Autoregressive Distribution Estimator" by Hugo Larochelle and Iain Murray (2011). Left: Samples, Right: Conditional Probabilities x̂ᵢ 
 </div>
 
 
 ![FVSBN vs NADE](src/autoregressiveModels_maximumLikelihoodEstimation/fvsbn_vs_nade.png)
 
 <div align="center">
-Figure: FVSBN vs. NADE 
+Figure 6: FVSBN vs. NADE 
 </div>
 
 ## General Discrete Distributions
@@ -488,13 +488,13 @@ PixelCNN uses a convolutional neural network (CNN) with masked convolutions to e
 </p>
 
 <div align="center">
-Figure: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image
+Figure 7: 5x5 Masked Convolution Filter for Single Channel (Grayscale) Image
 </div>
 
 ![Mask A and B](src/autoregressiveModels_maximumLikelihoodEstimation/mask_a_b.png)
 
 <div align="center">
-Figure: Mask A and B used in PixelCNN from "Pixel Recurrent Neural Networks" by van den Oord et al. (2016).
+Figure 8: Mask A and B used in PixelCNN from "Pixel Recurrent Neural Networks" by van den Oord et al. (2016).
 </div>
 
 2. **Residual Blocks**: PixelCNN employs residual blocks to allow for deeper architectures and better gradient flow. Each residual block consists of two masked convolutional layers followed by a skip connection.
@@ -511,13 +511,13 @@ In Pixel CNN, convolution filters (hidden dimensions) are split into three group
 ![Reserving Filters](src/autoregressiveModels_maximumLikelihoodEstimation/reserving_filters.png)
 
 <div align="center">
-Figure: Reserving Filters for RGB Channels
+Figure 9: Reserving Filters for RGB Channels
 </div>
 
 ![Virtual Splitting](src/autoregressiveModels_maximumLikelihoodEstimation/virtual_splitting.png)
 
 <div align="center">
-Figure: Virtual Splitting of Filters for RGB Channels
+Figure 10: Virtual Splitting of Filters for RGB Channels
 </div>
 
 Either method can be used, but the second method (virtual splitting) is often preferred. This approach groups the filters in a way that corresponds to each color channel.
@@ -743,6 +743,9 @@ In this topic summary, we have explored:
 10. The importance of empirical risk minimization and techniques to prevent overfitting.
 
 By understanding and applying these concepts, we can build robust generative models capable of creating high-quality and realistic data, pushing the boundaries of generative AI.
+
+### Note
+Figures 1, 3, and 4 have been created based on similar ones appearing in "Slide by Stefano Ermon, Aditya Grover. Autoregressive Models, Maximum Likelihood Estimation".
 
 ## References
 1. van den Oord, Aäron, et al. "Pixel recurrent neural networks." *International Conference on Machine Learning*. PMLR, 2016.
